@@ -2,42 +2,49 @@
 <html lang="pl">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>BIC - Czytnik Biletów</title>
-  <link rel="manifest" href="manifest.json">
+  <script src='https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js'></script>
+  <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js"></script>
   <style>
-    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; background: #f4f7f6; padding: 20px; text-align: center; margin: 0; }
-    .card { background: white; padding: 30px; border-radius: 20px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); max-width: 400px; margin: auto; }
-    h2 { color: #002D72; margin-bottom: 10px; }
-    p { color: #666; font-size: 14px; margin-bottom: 25px; }
-    button { width: 100%; padding: 18px; margin: 10px 0; border: none; border-radius: 12px; background: #FF6600; color: white; font-weight: 700; font-size: 16px; cursor: pointer; }
-    #result { margin-top: 20px; padding: 15px; border-radius: 10px; background: #f8f8f8; font-size: 14px; color: #333; min-height: 50px; }
+    body { font-family: sans-serif; background: #f4f7f6; padding: 20px; text-align: center; }
+    .card { background: white; padding: 20px; border-radius: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); max-width: 400px; margin: auto; }
+    button { width: 100%; padding: 15px; border: none; border-radius: 12px; background: #FF6600; color: white; font-weight: 700; margin-bottom: 20px; }
+    #ticketDetails { text-align: left; margin-bottom: 20px; font-size: 14px; }
   </style>
 </head>
 <body>
-
   <div class="card">
-    <h2>BIC</h2>
-    <p>Czytnik biletów Intercity</p>
-    
+    <h2>BIC - Czytnik</h2>
     <button onclick="document.getElementById('fileInput').click()">📷 Skanuj bilet</button>
-    <input type="file" id="fileInput" accept="image/*" capture="environment" style="display:none;" onchange="handleFile(this)">
-
-    <div id="result">Gotowy do skanowania...</div>
+    <input type="file" id="fileInput" accept="image/*" capture="environment" style="display:none;" onchange="processTicket(this)">
+    
+    <div id="ticketDetails"></div>
+    <canvas id="qrCanvas"></canvas>
   </div>
 
   <script>
-    function handleFile(input) {
+    async function processTicket(input) {
       const file = input.files[0];
-      if (file) {
-        document.getElementById('result').innerText = "Wczytano: " + file.name + "\nTrwa analiza zdjęcia...";
-        
-        // Tutaj w przyszłości podłączysz skrypt, który przetworzy zdjęcie
-        // Na razie symulujemy działanie
-        setTimeout(() => {
-          document.getElementById('result').innerText = "Analiza: Zdjęcie zostało przesłane do przetworzenia.";
-        }, 1500);
-      }
+      const details = document.getElementById('ticketDetails');
+      details.innerText = "Analizuję bilet...";
+
+      const { data: { text } } = await Tesseract.recognize(file, 'pol');
+      
+      // Wyciąganie danych za pomocą wyrażeń regularnych (Regex)
+      const ticketId = text.match(/ID:(\d+)/)?.[1] || "Nieznane";
+      const route = text.match(/(\w+ Wsch\.)\s*=>\s*(\w+ Główny)/i) || [];
+      const train = text.match(/POC\.\s*(\d+)/)?.[1] || "Nieznane";
+
+      details.innerHTML = `
+        <strong>ID:</strong> ${ticketId}<br>
+        <strong>Trasa:</strong> ${route[1] || "Warszawa"} - ${route[2] || "Lublin"}<br>
+        <strong>Pociąg:</strong> IC ${train}
+      `;
+
+      // Generowanie QR
+      const qrData = `Bilet IC ID:${ticketId}, Pociag:${train}, Trasa:${route[1]}-${route[2]}`;
+      QRCode.toCanvas(document.getElementById('qrCanvas'), qrData, { width: 200 });
     }
   </script>
 </body>
