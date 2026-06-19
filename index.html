@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>BIC - Manager Biletów Aztec</title>
+  <title>BIC - Stabilny Skaner Aztec</title>
   
   <script src="https://cdn.jsdelivr.net/npm/@zxing/library@0.21.3/umd/index.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/bwip-js@4.5.1/dist/bwip-js.min.js"></script>
@@ -21,20 +21,18 @@
     .bounce4 { top: 14px; left: 0; }
     @keyframes rotate-spinner { 100% { transform: rotate(360deg); } }
     
-    #result { margin-top: 15px; font-size: 14px; padding: 10px; border-radius: 10px; }
+    #result { margin-top: 15px; font-size: 14px; padding: 10px; border-radius: 10px; word-break: break-word; }
     canvas { margin-top: 15px; max-width: 100%; display: none; border: 1px solid #eee; padding: 10px; background: white; }
 
-    /* Panel informacji o bilecie */
     .ticket-info { display: none; margin-top: 20px; padding: 15px; background: #f8f9fa; border-radius: 12px; text-align: left; border-left: 5px solid #FF6600; }
     .ticket-info h3 { margin-top: 0; color: #FF6600; font-size: 16px; border-bottom: 1px solid #ddd; padding-bottom: 5px; }
     .info-row { display: flex; justify-content: space-between; margin-bottom: 8px; font-size: 14px; align-items: center; }
     .info-label { font-weight: bold; color: #555; }
     .info-value { color: #000; font-weight: 500; }
     
-    /* Formularz edycji danych */
     .edit-panel { display: none; margin-top: 15px; padding: 15px; background: #fff3cd; border-radius: 12px; text-align: left; border: 1px solid #ffeeba; }
     .edit-panel h4 { margin: 0 0 10px 0; color: #856404; }
-    .edit-panel input, .edit-panel select { width: 100%; padding: 8px; margin-bottom: 10px; border-radius: 6px; border: 1px solid #ccc; box-sizing: border-box; }
+    .edit-panel input { width: 100%; padding: 8px; margin-bottom: 10px; border-radius: 6px; border: 1px solid #ccc; box-sizing: border-box; }
     .btn-save { background: #28a745; margin-top: 5px; }
     
     .badge { padding: 4px 8px; border-radius: 6px; font-size: 13px; font-weight: bold; font-family: monospace; }
@@ -45,7 +43,7 @@
 <body>
   <div class="card">
     <h2>BIC - Skaner & Pamięć</h2>
-    <p style="font-size: 13px; color: #666; margin-bottom: 20px;">Zeskanuj bilet z papieru/PDF. Aplikacja go odtworzy i zapamięta szczegóły trasy.</p>
+    <p style="font-size: 13px; color: #666; margin-bottom: 20px;">Wybierz zdjęcie biletu. Skaner automatycznie zoptymalizuje obraz i odczyta kod.</p>
     
     <button onclick="document.getElementById('fileInput').click()">📷 Skanuj bilet (Papier / PDF)</button>
     <input type="file" id="fileInput" accept="image/*" capture="environment" style="display:none;" onchange="processTicket(this)">
@@ -80,7 +78,7 @@
     <div id="editPanel" class="edit-panel">
       <h4>Uzupełnij dane tego biletu:</h4>
       <label style="font-size:12px; font-weight:bold;">Liczba i typ taryfy:</label>
-      <input type="text" id="inputTariff" placeholder="np. U: 1 | -37% lub N: 1 | 100%">
+      <input type="text" id="inputTariff" placeholder="np. U: 1 | -37%">
       
       <label style="font-size:12px; font-weight:bold;">Stacja odjazdu i przyjazdu:</label>
       <input type="text" id="inputRoute" placeholder="np. Kraków Gł. -> Warszawa Centr.">
@@ -99,7 +97,74 @@
     let currentRawData = "";
 
     async function processTicket(input) {
-      const file = input.files[0];
       const resDiv = document.getElementById('result');
       const spinner = document.getElementById('spinner');
       const canvas = document.getElementById('aztecCanvas');
+      const infoBox = document.getElementById('ticketInfo');
+      const editBox = document.getElementById('editPanel');
+      
+      try {
+        const file = input.files[0];
+        if (!file) return;
+
+        // Reset i włączenie ładowania
+        spinner.style.display = "block";
+        infoBox.style.display = "none";
+        editBox.style.display = "none";
+        canvas.style.display = "none";
+        resDiv.style.background = "#eef";
+        resDiv.style.color = "#000";
+        resDiv.innerText = "Przetwarzanie pliku graficznego...";
+
+        const reader = new FileReader();
+        reader.onload = function(e) {
+          const img = new Image();
+          
+          // Kluczowa poprawka: najpierw definiujemy co zrobić po załadowaniu
+          img.onload = async function() {
+            try {
+              resDiv.innerText = "Optymalizacja rozmiaru zdjęcia...";
+              
+              // KOMPRESJA: Zmniejszamy obraz do max 1000px, aby uratować RAM telefonu
+              const maxDim = 1000;
+              let w = img.width;
+              let h = img.height;
+              if (w > maxDim || h > maxDim) {
+                if (w > h) { h *= maxDim / w; w = maxDim; }
+                else { w *= maxDim / h; h = maxDim; }
+              }
+              
+              const compressCanvas = document.createElement('canvas');
+              compressCanvas.width = w;
+              compressCanvas.height = h;
+              compressCanvas.getContext('2d').drawImage(img, 0, 0, w, h);
+              
+              resDiv.innerText = "Szukanie kodu kolejowego Aztec...";
+
+              if (typeof ZXing === 'undefined') {
+                throw new Error("Biblioteka skanera (ZXing) nie załadowała się poprawnie.");
+              }
+
+              // Skanowanie zoptymalizowanego obrazu
+              const codeReader = new ZXing.BrowserMultiFormatReader();
+              const result = await codeReader.decodeFromCanvas(compressCanvas);
+              currentRawData = result.getText();
+              
+              if (!currentRawData) {
+                throw new Error("Kod odczytany, ale jest pusty.");
+              }
+
+              // Generowanie nowego kodu cyfrowego
+              bwipjs.toCanvas(canvas, {
+                bcid: 'aztec',       
+                text: currentRawData,       
+                scale: 3,            
+                purebarcode: true    
+              });
+              
+              currentTicketId = currentRawData.split('|')[0] || "NieznanyID";
+              document.getElementById('infoId').innerText = currentTicketId;
+              
+              // Odczyt z LocalStorage
+              const savedData = localStorage.getItem(currentTicketId);
+              if
