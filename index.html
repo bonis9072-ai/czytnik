@@ -2,63 +2,48 @@
 <html lang="pl">
 <head>
   <meta charset="UTF-8">
-  <title>BIC - Skaner dla Konduktora</title>
+  <title>BIC - System Biletowy</title>
   <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/bwip-js@4.5.1/dist/bwip-js.min.js"></script>
   <style>
-    body { font-family: sans-serif; background: #e0e0e0; padding: 20px; text-align: center; }
-    .card { background: white; padding: 20px; border-radius: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); max-width: 400px; margin: auto; }
-    button { width: 100%; padding: 15px; background: #FF6600; color: white; border: none; border-radius: 12px; font-weight: bold; }
-    #dataSection { margin-top: 20px; text-align: left; display: none; }
-    canvas { width: 100%; height: auto; margin-top: 20px; padding: 10px; background: white; border: 1px solid #ddd; }
+    body { font-family: sans-serif; background: #eee; padding: 20px; }
+    .card { background: white; padding: 20px; border-radius: 15px; max-width: 400px; margin: auto; }
+    .field { margin-bottom: 10px; font-size: 14px; }
+    canvas { width: 100%; height: auto; margin-top: 20px; border: 1px solid #ccc; padding: 5px; }
   </style>
 </head>
 <body>
 
 <div class="card">
-  <h2>BIC - Skaner Konduktora</h2>
-  <button onclick="document.getElementById('fileInput').click()">📷 Wgraj zdjęcie biletu</button>
-  <input type="file" id="fileInput" accept="image/*" style="display:none;" onchange="process(this)">
-
-  <div id="dataSection">
-    <h3>Dane biletu:</h3>
-    <p><b>Trasa:</b> <span id="route">-</span></p>
-    <p><b>Czas:</b> <span id="time">-</span></p>
-    <p><b>Wagon/Miejsce:</b> <span id="seat">-</span></p>
+  <h2>BIC - Twoje Dane</h2>
+  <input type="file" id="fileInput" accept="image/*" onchange="process(this)">
+  
+  <div id="data" style="margin-top:20px;">
+    <div class="field"><b>Stacja początkowa:</b> <span id="start">...</span></div>
+    <div class="field"><b>Stacja końcowa:</b> <span id="end">...</span></div>
+    <div class="field"><b>Godziny:</b> <span id="time">...</span></div>
+    <div class="field"><b>Wagon/Miejsce:</b> <span id="seat">...</span></div>
+    <div class="field"><b>Taryfa:</b> <span id="tariff">...</span></div>
     <canvas id="barcodeCanvas"></canvas>
-    <p style="font-size:10px; color:gray;">* Ten kod jest czytelny dla skanerów ręcznych.</p>
   </div>
 </div>
 
 <script>
   async function process(input) {
     const file = input.files[0];
-    if (!file) return;
-    
-    document.getElementById('dataSection').style.display = "block";
     const { data: { text } } = await Tesseract.recognize(file, 'pol');
 
-    // Wyciąganie danych tekstem (dla informacji dla Ciebie)
-    const routeMatch = text.match(/(.*) => (.*)/);
-    if(routeMatch) document.getElementById('route').innerText = `${routeMatch[1].trim()} - ${routeMatch[2].trim()}`;
-
-    const timeMatch = text.match(/(\d{2}:\d{2}).*=>.*(\d{2}:\d{2})/);
-    if(timeMatch) document.getElementById('time').innerText = `Odjazd: ${timeMatch[1]} Przyjazd: ${timeMatch[2]}`;
-
-    // KLUCZOWE: Generowanie kodu dla konduktora
-    // Używamy numeru ZZ... który jest unikalnym identyfikatorem biletu
+    // Wyciąganie danych (Uproszczone dopasowanie do wzorca z Twojego zdjęcia)
+    const routes = text.match(/(.*) => (.*)/);
+    if(routes) { document.getElementById('start').innerText = routes[1].trim(); document.getElementById('end').innerText = routes[2].trim(); }
+    
+    const times = text.match(/(\d{2}:\d{2}).*=>.*(\d{2}:\d{2})/);
+    if(times) document.getElementById('time').innerText = `Odjazd: ${times[1]} Przyjazd: ${times[2]}`;
+    
+    // Generowanie kodu dla konduktora
     const idMatch = text.match(/ZZ\d+/);
     if(idMatch) {
-      document.getElementById('seat').innerText = "Wagon 12, miejsce 71";
-      bwipjs.toCanvas('barcodeCanvas', {
-        bcid: 'code128',       // Standard skanerów PKP
-        text: idMatch[0],      // Numer biletu jako wartość kodu
-        scale: 4,              // Wysoka jakość dla łatwego skanowania
-        height: 15,
-        includetext: true      // Czytelny numer pod kodem
-      });
-    } else {
-      alert("Nie wykryto numeru biletu (ZZ...). Spróbuj zrobić wyraźniejsze zdjęcie.");
+      bwipjs.toCanvas('barcodeCanvas', { bcid: 'code128', text: idMatch[0], scale: 3 });
     }
   }
 </script>
