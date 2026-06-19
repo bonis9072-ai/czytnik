@@ -3,16 +3,16 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>BIC - Czytnik Biletów</title>
-  <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+  <title>BIC - Manager Biletów Aztec</title>
+  
+  <script src="https://cdn.jsdelivr.net/npm/@zxing/library@0.21.3/umd/index.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/bwip-js@4.5.1/dist/bwip-js.min.js"></script>
   
   <style>
-    body { font-family: sans-serif; background: #f4f7f6; padding: 20px; text-align: center; }
+    body { font-family: sans-serif; background: #f4f7f6; padding: 20px; text-align: center; color: #333; }
     .card { background: white; padding: 20px; border-radius: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); max-width: 400px; margin: auto; }
-    button { width: 100%; padding: 15px; border: none; border-radius: 12px; background: #FF6600; color: white; font-weight: 700; cursor: pointer; }
+    button { width: 100%; padding: 15px; border: none; border-radius: 12px; background: #FF6600; color: white; font-weight: 700; cursor: pointer; font-size: 16px; margin-bottom: 10px; }
     
-    /* Animacja kręcących się kropek */
     .spinner { display: none; margin: 20px auto; width: 40px; height: 40px; position: relative; animation: rotate-spinner 1.5s linear infinite; }
     .spinner div { width: 12px; height: 12px; background-color: #FF6600; border-radius: 50%; position: absolute; }
     .bounce1 { top: 0; left: 14px; }
@@ -21,57 +21,85 @@
     .bounce4 { top: 14px; left: 0; }
     @keyframes rotate-spinner { 100% { transform: rotate(360deg); } }
     
-    #result { margin-top: 20px; font-size: 14px; text-align: left; }
-    #qrCanvas { margin-top: 20px; display: inline-block; }
+    #result { margin-top: 15px; font-size: 14px; padding: 10px; border-radius: 10px; }
+    canvas { margin-top: 15px; max-width: 100%; display: none; border: 1px solid #eee; padding: 10px; background: white; }
+
+    /* Panel informacji o bilecie */
+    .ticket-info { display: none; margin-top: 20px; padding: 15px; background: #f8f9fa; border-radius: 12px; text-align: left; border-left: 5px solid #FF6600; }
+    .ticket-info h3 { margin-top: 0; color: #FF6600; font-size: 16px; border-bottom: 1px solid #ddd; padding-bottom: 5px; }
+    .info-row { display: flex; justify-content: space-between; margin-bottom: 8px; font-size: 14px; align-items: center; }
+    .info-label { font-weight: bold; color: #555; }
+    .info-value { color: #000; font-weight: 500; }
+    
+    /* Formularz edycji danych */
+    .edit-panel { display: none; margin-top: 15px; padding: 15px; background: #fff3cd; border-radius: 12px; text-align: left; border: 1px solid #ffeeba; }
+    .edit-panel h4 { margin: 0 0 10px 0; color: #856404; }
+    .edit-panel input, .edit-panel select { width: 100%; padding: 8px; margin-bottom: 10px; border-radius: 6px; border: 1px solid #ccc; box-sizing: border-box; }
+    .btn-save { background: #28a745; margin-top: 5px; }
+    
+    .badge { padding: 4px 8px; border-radius: 6px; font-size: 13px; font-weight: bold; font-family: monospace; }
+    .badge.normal { background: #d4edda; color: #155724; }
+    .badge.discount { background: #fff3cd; color: #856404; }
   </style>
 </head>
 <body>
   <div class="card">
-    <h2>BIC - Czytnik</h2>
-    <button onclick="document.getElementById('fileInput').click()">📷 Skanuj bilet</button>
+    <h2>BIC - Skaner & Pamięć</h2>
+    <p style="font-size: 13px; color: #666; margin-bottom: 20px;">Zeskanuj bilet z papieru/PDF. Aplikacja go odtworzy i zapamięta szczegóły trasy.</p>
+    
+    <button onclick="document.getElementById('fileInput').click()">📷 Skanuj bilet (Papier / PDF)</button>
     <input type="file" id="fileInput" accept="image/*" capture="environment" style="display:none;" onchange="processTicket(this)">
     
     <div id="spinner" class="spinner">
       <div class="bounce1"></div><div class="bounce2"></div><div class="bounce3"></div><div class="bounce4"></div>
     </div>
+    
     <div id="result"></div>
-    <div id="qrCanvas"></div>
+
+    <div id="ticketInfo" class="ticket-info">
+      <h3>Dane Podglądu</h3>
+      <div class="info-row">
+        <span class="info-label">Numer:</span>
+        <span id="infoId" class="info-value">-</span>
+      </div>
+      <div class="info-row">
+        <span class="info-label">Taryfa:</span>
+        <span id="infoTariff" class="info-value">-</span>
+      </div>
+      <div class="info-row">
+        <span class="info-label">Relacja:</span>
+        <span id="infoRoute" class="info-value">-</span>
+      </div>
+      <div class="info-row">
+        <span class="info-label">Godziny:</span>
+        <span id="infoTime" class="info-value">-</span>
+      </div>
+      <button style="background:#6c757d; padding:8px; font-size:12px; margin-top:10px;" onclick="showEditForm()">✏️ Edytuj opisy trasy</button>
+    </div>
+
+    <div id="editPanel" class="edit-panel">
+      <h4>Uzupełnij dane tego biletu:</h4>
+      <label style="font-size:12px; font-weight:bold;">Liczba i typ taryfy:</label>
+      <input type="text" id="inputTariff" placeholder="np. U: 1 | -37% lub N: 1 | 100%">
+      
+      <label style="font-size:12px; font-weight:bold;">Stacja odjazdu i przyjazdu:</label>
+      <input type="text" id="inputRoute" placeholder="np. Kraków Gł. -> Warszawa Centr.">
+      
+      <label style="font-size:12px; font-weight:bold;">Godziny połączenia:</label>
+      <input type="text" id="inputTime" placeholder="np. Odjazd: 14:25 | Przyjazd: 16:55">
+      
+      <button class="btn-save" onclick="saveTicketDetails()">💾 Zapisz bilet w pamięci</button>
+    </div>
+    
+    <canvas id="aztecCanvas"></canvas>
   </div>
 
   <script>
+    let currentTicketId = "";
+    let currentRawData = "";
+
     async function processTicket(input) {
       const file = input.files[0];
       const resDiv = document.getElementById('result');
       const spinner = document.getElementById('spinner');
-      const canvas = document.getElementById('qrCanvas');
-      
-      if (!file) return;
-
-      // Reset stanu
-      spinner.style.display = "block";
-      resDiv.innerText = "Analizuję bilet...";
-      canvas.innerHTML = ""; 
-
-      try {
-        const { data: { text } } = await Tesseract.recognize(file, 'pol');
-        
-        const ticketId = text.match(/ID:\s*(\d+)/i)?.[1] || "Nie znaleziono ID";
-        const train = text.match(/POC\.\s*(\d+)/i)?.[1] || "Nieznany";
-        
-        resDiv.innerHTML = `<strong>Znaleziono:</strong><br>ID: ${ticketId}<br>Pociąg: ${train}`;
-        
-        // Generowanie QR
-        new QRCode(canvas, {
-          text: `Bilet IC ID:${ticketId} Pociag:${train}`,
-          width: 200,
-          height: 200
-        });
-      } catch (err) {
-        resDiv.innerText = "Błąd: " + err.message;
-      } finally {
-        spinner.style.display = "none";
-      }
-    }
-  </script>
-</body>
-</html>
+      const canvas = document.getElementById('aztecCanvas');
