@@ -13,12 +13,14 @@
     .card { background: white; padding: 20px; border-radius: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); max-width: 400px; margin: 20px auto; position: relative; z-index: 10; }
     button { width: 100%; padding: 15px; border: none; border-radius: 12px; background: #FF6600; color: white; font-weight: 700; cursor: pointer; font-size: 16px; margin-bottom: 10px; }
     
+    .or-divider { margin: 15px 0; font-size: 12px; color: #aaa; font-weight: bold; text-transform: uppercase; display: flex; align-items: center; justify-content: center; }
+    .or-divider::before, .or-divider::after { content: ""; flex: 1; height: 1px; background: #ddd; margin: 0 10px; }
+    
+    .smart-paste { width: 100%; padding: 10px; border-radius: 8px; border: 1px solid #ccc; box-sizing: border-box; font-size: 13px; resize: none; height: 60px; }
+    
     .spinner { display: none; margin: 20px auto; width: 40px; height: 40px; position: relative; animation: rotate-spinner 1.5s linear infinite; }
     .spinner div { width: 12px; height: 12px; background-color: #FF6600; border-radius: 50%; position: absolute; }
-    .bounce1 { top: 0; left: 14px; }
-    .bounce2 { top: 14px; right: 0; }
-    .bounce3 { bottom: 0; left: 14px; }
-    .bounce4 { top: 14px; left: 0; }
+    .bounce1 { top: 0; left: 14px; } .bounce2 { top: 14px; right: 0; } .bounce3 { bottom: 0; left: 14px; } .bounce4 { top: 14px; left: 0; }
     @keyframes rotate-spinner { 100% { transform: rotate(360deg); } }
     
     #result { margin-top: 15px; font-size: 14px; padding: 10px; border-radius: 10px; word-break: break-word; font-weight: 500; }
@@ -40,34 +42,32 @@
     .badge.discount { background: #fff3cd; color: #856404; }
 
     /* ==========================================================================
-       ZRELAKSOWANY SYSTEM DIORAMY KOLEJOWEJ (Pociągi jeden pod drugim)
+       SYSTEM DIORAMY KOLEJOWEJ (Pełna szerokość ekranu, pociągi pod sobą)
        ========================================================================== */
-    .train-container { position: fixed; left: 0; width: 100%; pointer-events: none; z-index: 1; opacity: 0.10; color: #555; }
+    .train-container { position: fixed; left: 0; width: 100vw; pointer-events: none; z-index: 1; opacity: 0.12; color: #555; overflow: visible; }
     
-    /* Ustawienie torów równolegle na dole ekranu */
-    .track-upper { bottom: 16%; }
-    .track-lower { bottom: 6%; }
+    /* Tory ułożone jeden pod drugim na dole całej strony */
+    .track-upper { bottom: 18%; }
+    .track-lower { bottom: 7%; }
 
-    /* Wolna, dostojna animacja (30 sekund na pełną pętlę) */
-    .train-mover-left { width: 160px; position: absolute; animation: move-left 30s linear infinite; }
-    .train-mover-right { width: 160px; position: absolute; animation: move-right 30s linear infinite 15s; }
+    /* Wolny i płynny ruch przez absolutnie całą szerokość witryny (32 sekundy) */
+    .train-mover-left { width: 180px; position: absolute; animation: move-left 32s linear infinite; }
+    .train-mover-right { width: 180px; position: absolute; animation: move-right 32s linear infinite 16s; }
 
     @keyframes move-left {
       0% { transform: translateX(100vw) scaleX(-1); }
-      75% { transform: translateX(-180px) scaleX(-1); }
-      100% { transform: translateX(-180px) scaleX(-1); }
+      100% { transform: translateX(-220px) scaleX(-1); }
     }
     @keyframes move-right {
-      0% { transform: translateX(-180px); }
-      75% { transform: translateX(100vw); }
+      0% { transform: translateX(-220px); }
       100% { transform: translateX(100vw); }
     }
 
-    /* Delikatne, powolne kołysanie wagonów */
+    /* Naturalne, asynchroniczne drgania wagonów */
     @keyframes train-jolt {
       0%, 88%, 93%, 100% { transform: translateY(0); }
-      90% { transform: translateY(-1.5px); } 
-      91.5% { transform: translateY(0.3px); }  
+      90% { transform: translateY(-1.2px); } 
+      91.5% { transform: translateY(0.2px); }  
     }
     .body-loco { animation: train-jolt 2.8s infinite ease-in-out 0.1s; transform-origin: center; }
     .body-car1 { animation: train-jolt 2.4s infinite ease-in-out 0.4s; transform-origin: center; }
@@ -79,10 +79,10 @@
   <div class="train-container track-upper">
     <div class="train-mover-left">
       <svg viewBox="0 0 230 60" xmlns="http://www.w3.org/2000/svg">
-        <g class="body-car2"><rect x="5" y="15" width="60" height="28" rx="2" fill="currentColor"/><rect x="5" y="12" width="60" height="3" fill="currentColor"/><rect x="12" y="12" width="10" height="3" fill="currentColor"/><rect x="48" y="12" width="10" height="3" fill="currentColor"/><rect x="10" y="20" width="11" height="9" fill="#f4f7f6"/><rect x="25" y="20" width="11" height="9" fill="#f4f7f6"/><rect x="40" y="20" width="11" height="9" fill="#f4f7f6"/></g>
-        <g class="body-car1"><rect x="65" y="32" width="10" height="3" fill="currentColor"/><rect x="75" y="15" width="60" height="28" rx="2" fill="currentColor"/><rect x="75" y="12" width="60" height="3" fill="currentColor"/><rect x="82" y="12" width="10" height="3" fill="currentColor"/><rect x="118" y="12" width="10" height="3" fill="currentColor"/><rect x="80" y="20" width="11" height="9" fill="#f4f7f6"/><rect x="95" y="20" width="11" height="9" fill="#f4f7f6"/><rect x="110" y="20" width="11" height="9" fill="#f4f7f6"/></g>
-        <g class="body-loco"><rect x="135" y="32" width="10" height="3" fill="currentColor"/><rect x="145" y="15" width="30" height="28" fill="currentColor"/><rect x="142" y="12" width="36" height="3" fill="currentColor"/><rect x="150" y="20" width="15" height="12" fill="#f4f7f6"/><rect x="175" y="23" width="40" height="20" fill="currentColor"/><rect x="195" y="15" width="10" height="8" fill="currentColor"/><path d="M 193 15 L 207 15 L 205 12 L 195 12 Z" fill="currentColor"/><path d="M 215 33 L 225 43 L 215 43 Z" fill="currentColor"/></g>
-        <g class="train-wheels"><circle cx="15" cy="46" r="6" fill="currentColor"/><circle cx="15" cy="46" r="2" fill="#f4f7f6"/><circle cx="27" cy="46" r="6" fill="currentColor"/><circle cx="27" cy="46" r="2" fill="#f4f7f6"/><circle cx="43" cy="46" r="6" fill="currentColor"/><circle cx="43" cy="46" r="2" fill="#f4f7f6"/><circle cx="55" cy="46" r="6" fill="currentColor"/><circle cx="55" cy="46" r="2" fill="#f4f7f6"/><circle cx="85" cy="46" r="6" fill="currentColor"/><circle cx="85" cy="46" r="2" fill="#f4f7f6"/><circle cx="97" cy="46" r="6" fill="currentColor"/><circle cx="97" cy="46" r="2" fill="#f4f7f6"/><circle cx="113" cy="46" r="6" fill="currentColor"/><circle cx="113" cy="46" r="2" fill="#f4f7f6"/><circle cx="125" cy="46" r="6" fill="currentColor"/><circle cx="125" cy="46" r="2" fill="#f4f7f6"/><circle cx="160" cy="46" r="6" fill="currentColor"/><circle cx="160" cy="46" r="2" fill="#f4f7f6"/><circle cx="195" cy="46" r="6" fill="currentColor"/><circle cx="195" cy="46" r="2" fill="#f4f7f6"/></g>
+        <g class="body-car2"><rect x="5" y="15" width="60" height="28" rx="2" fill="currentColor"/><rect x="5" y="12" width="60" height="3" fill="currentColor"/><rect x="10" y="20" width="11" height="9" fill="#f4f7f6"/><rect x="25" y="20" width="11" height="9" fill="#f4f7f6"/><rect x="40" y="20" width="11" height="9" fill="#f4f7f6"/></g>
+        <g class="body-car1"><rect x="65" y="32" width="10" height="3" fill="currentColor"/><rect x="75" y="15" width="60" height="28" rx="2" fill="currentColor"/><rect x="75" y="12" width="60" height="3" fill="currentColor"/><rect x="80" y="20" width="11" height="9" fill="#f4f7f6"/><rect x="95" y="20" width="11" height="9" fill="#f4f7f6"/><rect x="110" y="20" width="11" height="9" fill="#f4f7f6"/></g>
+        <g class="body-loco"><rect x="135" y="32" width="10" height="3" fill="currentColor"/><rect x="145" y="15" width="30" height="28" fill="currentColor"/><rect x="142" y="12" width="36" height="3" fill="currentColor"/><rect x="150" y="20" width="15" height="12" fill="#f4f7f6"/><rect x="175" y="23" width="40" height="20" fill="currentColor"/><path d="M 215 33 L 225 43 L 215 43 Z" fill="currentColor"/></g>
+        <g><circle cx="15" cy="46" r="6" fill="currentColor"/><circle cx="27" cy="46" r="6" fill="currentColor"/><circle cx="43" cy="46" r="6" fill="currentColor"/><circle cx="55" cy="46" r="6" fill="currentColor"/><circle cx="85" cy="46" r="6" fill="currentColor"/><circle cx="97" cy="46" r="6" fill="currentColor"/><circle cx="113" cy="46" r="6" fill="currentColor"/><circle cx="125" cy="46" r="6" fill="currentColor"/><circle cx="160" cy="46" r="6" fill="currentColor"/><circle cx="195" cy="46" r="6" fill="currentColor"/></g>
       </svg>
     </div>
   </div>
@@ -90,21 +90,24 @@
   <div class="train-container track-lower">
     <div class="train-mover-right">
       <svg viewBox="0 0 230 60" xmlns="http://www.w3.org/2000/svg">
-        <g class="body-car2"><rect x="5" y="15" width="60" height="28" rx="2" fill="currentColor"/><rect x="5" y="12" width="60" height="3" fill="currentColor"/><rect x="12" y="12" width="10" height="3" fill="currentColor"/><rect x="48" y="12" width="10" height="3" fill="currentColor"/><rect x="10" y="20" width="11" height="9" fill="#f4f7f6"/><rect x="25" y="20" width="11" height="9" fill="#f4f7f6"/><rect x="40" y="20" width="11" height="9" fill="#f4f7f6"/></g>
-        <g class="body-car1"><rect x="65" y="32" width="10" height="3" fill="currentColor"/><rect x="75" y="15" width="60" height="28" rx="2" fill="currentColor"/><rect x="75" y="12" width="60" height="3" fill="currentColor"/><rect x="82" y="12" width="10" height="3" fill="currentColor"/><rect x="118" y="12" width="10" height="3" fill="currentColor"/><rect x="80" y="20" width="11" height="9" fill="#f4f7f6"/><rect x="95" y="20" width="11" height="9" fill="#f4f7f6"/><rect x="110" y="20" width="11" height="9" fill="#f4f7f6"/></g>
-        <g class="body-loco"><rect x="135" y="32" width="10" height="3" fill="currentColor"/><rect x="145" y="15" width="30" height="28" fill="currentColor"/><rect x="142" y="12" width="36" height="3" fill="currentColor"/><rect x="150" y="20" width="15" height="12" fill="#f4f7f6"/><rect x="175" y="23" width="40" height="20" fill="currentColor"/><rect x="195" y="15" width="10" height="8" fill="currentColor"/><path d="M 193 15 L 207 15 L 205 12 L 195 12 Z" fill="currentColor"/><path d="M 215 33 L 225 43 L 215 43 Z" fill="currentColor"/></g>
-        <g class="train-wheels"><circle cx="15" cy="46" r="6" fill="currentColor"/><circle cx="15" cy="46" r="2" fill="#f4f7f6"/><circle cx="27" cy="46" r="6" fill="currentColor"/><circle cx="27" cy="46" r="2" fill="#f4f7f6"/><circle cx="43" cy="46" r="6" fill="currentColor"/><circle cx="43" cy="46" r="2" fill="#f4f7f6"/><circle cx="55" cy="46" r="6" fill="currentColor"/><circle cx="55" cy="46" r="2" fill="#f4f7f6"/><circle cx="85" cy="46" r="6" fill="currentColor"/><circle cx="85" cy="46" r="2" fill="#f4f7f6"/><circle cx="97" cy="46" r="6" fill="currentColor"/><circle cx="97" cy="46" r="2" fill="#f4f7f6"/><circle cx="113" cy="46" r="6" fill="currentColor"/><circle cx="113" cy="46" r="2" fill="#f4f7f6"/><circle cx="125" cy="46" r="6" fill="currentColor"/><circle cx="125" cy="46" r="2" fill="#f4f7f6"/><circle cx="160" cy="46" r="6" fill="currentColor"/><circle cx="160" cy="46" r="2" fill="#f4f7f6"/><circle cx="195" cy="46" r="6" fill="currentColor"/><circle cx="195" cy="46" r="2" fill="#f4f7f6"/></g>
+        <g class="body-car2"><rect x="5" y="15" width="60" height="28" rx="2" fill="currentColor"/><rect x="5" y="12" width="60" height="3" fill="currentColor"/><rect x="10" y="20" width="11" height="9" fill="#f4f7f6"/><rect x="25" y="20" width="11" height="9" fill="#f4f7f6"/><rect x="40" y="20" width="11" height="9" fill="#f4f7f6"/></g>
+        <g class="body-car1"><rect x="65" y="32" width="10" height="3" fill="currentColor"/><rect x="75" y="15" width="60" height="28" rx="2" fill="currentColor"/><rect x="75" y="12" width="60" height="3" fill="currentColor"/><rect x="80" y="20" width="11" height="9" fill="#f4f7f6"/><rect x="95" y="20" width="11" height="9" fill="#f4f7f6"/><rect x="110" y="20" width="11" height="9" fill="#f4f7f6"/></g>
+        <g class="body-loco"><rect x="135" y="32" width="10" height="3" fill="currentColor"/><rect x="145" y="15" width="30" height="28" fill="currentColor"/><rect x="142" y="12" width="36" height="3" fill="currentColor"/><rect x="150" y="20" width="15" height="12" fill="#f4f7f6"/><rect x="175" y="23" width="40" height="20" fill="currentColor"/><path d="M 215 33 L 225 43 L 215 43 Z" fill="currentColor"/></g>
+        <g><circle cx="15" cy="46" r="6" fill="currentColor"/><circle cx="27" cy="46" r="6" fill="currentColor"/><circle cx="43" cy="46" r="6" fill="currentColor"/><circle cx="55" cy="46" r="6" fill="currentColor"/><circle cx="85" cy="46" r="6" fill="currentColor"/><circle cx="97" cy="46" r="6" fill="currentColor"/><circle cx="113" cy="46" r="6" fill="currentColor"/><circle cx="125" cy="46" r="6" fill="currentColor"/><circle cx="160" cy="46" r="6" fill="currentColor"/><circle cx="195" cy="46" r="6" fill="currentColor"/></g>
       </svg>
     </div>
   </div>
 
   <div class="card">
     <h2>BIC - Skaner & Pamięć</h2>
-    <p style="font-size: 13px; color: #666; margin-bottom: 20px;">Wybierz zdjęcie biletu. Skaner zoptymalizuje obraz i odczyta kod Aztec.</p>
+    <p style="font-size: 13px; color: #666; margin-bottom: 20px;">Wybierz zdjęcie biletu lub wklej dane tekstowe pobrane z sieci.</p>
     
-    <button onclick="document.getElementById('fileInput').click()">📷 Skanuj bilet (Papier / PDF)</button>
+    <button onclick="document.getElementById('fileInput').click()">📷 Skanuj obraz biletu</button>
     <input type="file" id="fileInput" accept="image/*" style="display:none;" onchange="processTicket(this)">
     
+    <div class="or-divider">LUB inteligentne uzupełnianie</div>
+    <textarea class="smart-paste" id="smartPasteInput" placeholder="Wklej tutaj tekst z biletu lub payload JSON z sieci..." oninput="handleSmartPaste(this)"></textarea>
+
     <div id="spinner" class="spinner">
       <div class="bounce1"></div><div class="bounce2"></div><div class="bounce3"></div><div class="bounce4"></div>
     </div>
@@ -117,7 +120,7 @@
       <div class="info-row"><span class="info-label">Taryfa:</span><span id="infoTariff" class="info-value">-</span></div>
       <div class="info-row"><span class="info-label">Relacja:</span><span id="infoRoute" class="info-value">-</span></div>
       <div class="info-row"><span class="info-label">Godziny:</span><span id="infoTime" class="info-value">-</span></div>
-      <button style="background:#6c757d; padding:8px; font-size:12px; margin-top:10px;" onclick="showEditForm()">✏️ Edytuj opisy trasy</button>
+      <button style="background:#6c757d; padding:8px; font-size:12px; margin-top:10px;" onclick="showEditForm()">✏️ Edytuj opisy ręcznie</button>
     </div>
 
     <div id="editPanel" class="edit-panel">
@@ -135,20 +138,45 @@
   </div>
 
   <script>
-    let currentTicketId = "";
+    let currentTicketId = "TEMP_" + Math.floor(Math.random() * 1000000);
     let currentRawData = "";
 
-    // Globalny łapacz błędów dla bezpieczeństwa
-    window.onerror = function(msg, url, line) {
-      const resDiv = document.getElementById('result');
-      if(resDiv) {
-        resDiv.style.background = "#f8d7da";
-        resDiv.style.color = "#721c24";
-        resDiv.innerHTML = "<strong>Krytyczny błąd systemu:</strong> " + msg + " (Linia: " + line + ")";
-      }
-      return false;
-    };
+    // Inteligentny i odporny na błędy parser wklejanych danych
+    function handleSmartPaste(textarea) {
+      const val = textarea.value.trim();
+      if (!val) return;
 
+      let extractedRoute = "";
+      let extractedTime = "";
+      let extractedTariff = "Normalny";
+
+      try {
+        const json = JSON.parse(val);
+        if(json.stationFrom || json.departureStation) extractedRoute = (json.stationFrom || json.departureStation) + " -> " + (json.stationTo || json.arrivalStation);
+        if(json.departureTime) extractedTime = "Odjazd: " + json.departureTime;
+        if(json.ticketId || json.id) currentTicketId = String(json.ticketId || json.id);
+      } catch(e) {
+        const timeMatches = val.match(/\b\d{2}[:.]\d{2}\b/g);
+        if (timeMatches && timeMatches.length >= 2) {
+          extractedTime = `Odjazd: ${timeMatches[0]} | Przyjazd: ${timeMatches[1]}`;
+        } else if (timeMatches && timeMatches.length === 1) {
+          extractedTime = `Odjazd: ${timeMatches[0]}`;
+        }
+        if (val.toLowerCase().includes("37%")) extractedTariff = "U: 1 | -37%";
+        if (val.toLowerCase().includes("51%")) extractedTariff = "U: 1 | -51%";
+      }
+
+      document.getElementById('inputTariff').value = extractedTariff;
+      if (extractedRoute) document.getElementById('inputRoute').value = extractedRoute;
+      if (extractedTime) document.getElementById('inputTime').value = extractedTime;
+      
+      showEditForm();
+      document.getElementById('result').innerHTML = "✨ <strong>Wykryto dane strukturalne!</strong> Sprawdź i zapisz bilet poniżej.";
+      document.getElementById('result').style.background = "#fff3cd";
+      document.getElementById('result').style.color = "#856404";
+    }
+
+    // Bezpośrednie i błyskawiczne dekodowanie obrazka (bez blokowania pętli)
     async function processTicket(input) {
       const resDiv = document.getElementById('result');
       const spinner = document.getElementById('spinner');
@@ -159,121 +187,83 @@
       const file = input.files[0];
       if (!file) return;
 
-      // Reset UI
       spinner.style.display = "block";
       infoBox.style.display = "none";
       editBox.style.display = "none";
       canvas.style.display = "none";
-      resDiv.style.background = "#eef";
-      resDiv.style.color = "#000";
-      resDiv.innerText = "Inicjalizacja pliku...";
-
-      if (typeof ZXing === 'undefined') {
-        resDiv.style.background = "#f8d7da";
-        resDiv.style.color = "#721c24";
-        resDiv.innerHTML = "<strong>Błąd:</strong> Biblioteka skanera (ZXing) nie załadowała się z sieci CDN.";
-        spinner.style.display = "none";
-        return;
-      }
+      resDiv.style.background = "#fff3cd"; 
+      resDiv.style.color = "#856404"; 
+      resDiv.innerText = "Trwa bezpośrednie dekodowanie kodu Aztec...";
 
       const img = new Image();
-      
-      img.onload = function() {
+      img.onload = async function() {
         try {
-          resDiv.innerText = "Kompresowanie i optymalizacja RAM-u...";
-          
-          // Bezpieczne skalowanie obrazu w dół do max 900px
-          const maxDim = 900;
-          let w = img.width;
-          let h = img.height;
-          if (w > maxDim || h > maxDim) {
-            if (w > h) { h *= maxDim / w; w = maxDim; }
-            else { w *= maxDim / h; h = maxDim; }
+          if (typeof ZXing === 'undefined') {
+            throw new Error("Biblioteka dekodera ZXing nie załadowała się poprawnie z sieci CDN.");
+          }
+
+          const codeReader = typeof ZXing.BrowserAztecCodeReader !== 'undefined' 
+            ? new ZXing.BrowserAztecCodeReader() 
+            : new ZXing.BrowserMultiFormatReader();
+            
+          // Uniwersalny przełącznik metod dekodujących (zabezpieczenie wersji biblioteki)
+          let result;
+          if (typeof codeReader.decodeFromImage === 'function') {
+            result = await codeReader.decodeFromImage(img);
+          } else if (typeof codeReader.decodeFromImageElement === 'function') {
+            result = await codeReader.decodeFromImageElement(img);
+          } else if (typeof codeReader.decode === 'function') {
+            result = await codeReader.decode(img);
+          } else {
+            throw new Error("Brak kompatybilnej metody dekodowania obrazu w załadowanej wersji biblioteki.");
           }
           
-          const compressCanvas = document.createElement('canvas');
-          compressCanvas.width = w;
-          compressCanvas.height = h;
-          const ctx = compressCanvas.getContext('2d');
-          ctx.drawImage(img, 0, 0, w, h);
+          currentRawData = result.getText();
+          if (!currentRawData) throw new Error("Odczytany ciąg danych kodu jest pusty.");
+
+          // Generowanie czystego kodu cyfrowego za pomocą bwip-js
+          if (typeof bwipjs !== 'undefined') {
+            bwipjs.toCanvas(canvas, { bcid: 'aztec', text: currentRawData, scale: 3, purebarcode: true });
+            canvas.style.display = "inline-block";
+          }
           
-          resDiv.innerText = "Skanowanie kodu Aztec (Analiza obrazu)...";
-
-          // Tworzenie tymczasowego, zoptymalizowanego elementu Image
-          const smallImg = new Image();
+          currentTicketId = currentRawData.split('|')[0] || "Bilet_" + Math.floor(Math.random()*10000);
+          document.getElementById('infoId').innerText = currentTicketId;
           
-          smallImg.onload = async function() {
-            try {
-              const codeReader = typeof ZXing.BrowserAztecCodeReader !== 'undefined' 
-                ? new ZXing.BrowserAztecCodeReader() 
-                : new ZXing.BrowserMultiFormatReader();
-                
-              const result = await codeReader.decodeFromImageElement(smallImg);
-              currentRawData = result.getText();
-              
-              if (!currentRawData) {
-                throw new Error("Odczytany kod jest pusty.");
-              }
+          const savedData = localStorage.getItem(currentTicketId);
+          if (savedData) {
+            const parsed = JSON.parse(savedData);
+            document.getElementById('infoTariff').innerHTML = `<span class="badge ${parsed.tariff.includes('U:') ? 'discount' : 'normal'}">${parsed.tariff}</span>`;
+            document.getElementById('infoRoute').innerText = parsed.route;
+            document.getElementById('infoTime').innerText = parsed.time;
+          } else {
+            document.getElementById('infoTariff').innerHTML = `<span class="badge normal">Nowy bilet</span>`;
+            showEditForm();
+          }
 
-              // Generowanie nowego cyfrowego kodu Aztec na ekranie
-              bwipjs.toCanvas(canvas, {
-                bcid: 'aztec',       
-                text: currentRawData,       
-                scale: 3,            
-                purebarcode: true    
-              });
-              
-              currentTicketId = currentRawData.split('|')[0] || "NieznanyID";
-              document.getElementById('infoId').innerText = currentTicketId;
-              
-              const savedData = localStorage.getItem(currentTicketId);
-              if (savedData) {
-                const parsed = JSON.parse(savedData);
-                document.getElementById('infoTariff').innerHTML = `<span class="badge ${parsed.tariff.includes('U:') ? 'discount' : 'normal'}">${parsed.tariff}</span>`;
-                document.getElementById('infoRoute').innerText = parsed.route;
-                document.getElementById('infoTime').innerText = parsed.time;
-              } else {
-                document.getElementById('infoTariff').innerHTML = `<span class="badge normal">Nowy bilet</span>`;
-                document.getElementById('infoRoute').innerText = "Wprowadź trasę poniżej";
-                document.getElementById('infoTime').innerText = "Wprowadź godziny połączenia";
-                showEditForm();
-              }
+          resDiv.style.background = "#d4edda"; 
+          resDiv.style.color = "#155724"; 
+          resDiv.innerHTML = "<strong>Sukces!</strong> Kod Aztec został pomyślnie rozszyfrowany.";
+          infoBox.style.display = "block";
 
-              resDiv.style.background = "#d4edda";
-              resDiv.style.color = "#155724";
-              resDiv.innerHTML = "<strong>Sukces!</strong> Kod odczytany pomyślnie.";
-              infoBox.style.display = "block"; 
-              canvas.style.display = "inline-block";
-
-            } catch (err) {
-              resDiv.style.background = "#f8d7da";
-              resDiv.style.color = "#721c24";
-              if (err.name === 'NotFoundException' || err.message.includes('No MultiFormat Readers') || err.message.includes('No code')) {
-                resDiv.innerHTML = "<strong>Nie wykryto kodu Aztec.</strong> Zbliż aparat, wyprostuj bilet i unikaj odbić światła.";
-              } else {
-                resDiv.innerHTML = "<strong>Błąd dekodera:</strong> " + err.message;
-              }
-            } finally {
-              spinner.style.display = "none";
-            }
-          };
-
-          smallImg.src = compressCanvas.toDataURL('image/jpeg', 0.85);
-
-        } catch (globalErr) {
-          resDiv.style.background = "#f8d7da";
+        } catch (err) {
+          resDiv.style.background = "#f8d7da"; 
           resDiv.style.color = "#721c24";
-          resDiv.innerHTML = "<strong>Błąd przetwarzania:</strong> " + globalErr.message;
-          spinner.style.display = "none";
-        } finally {
+          if (err.name === 'NotFoundException' || err.message.includes('No MultiFormat Readers') || err.message.includes('not detect')) {
+            resDiv.innerHTML = "<strong>Nie wykryto kodu Aztec.</strong> Zrób zdjęcie prostopadle, bez odbić światła i cieni na kodzie.";
+          } else {
+            resDiv.innerHTML = "<strong>Błąd skanera:</strong> " + err.message;
+          }
+        } finally { 
+          spinner.style.display = "none"; 
           URL.revokeObjectURL(img.src);
         }
       };
 
       img.onerror = function() {
-        resDiv.style.background = "#f8d7da";
+        resDiv.style.background = "#f8d7da"; 
         resDiv.style.color = "#721c24";
-        resDiv.innerHTML = "<strong>Błąd sprzętowy:</strong> Nie można załadować pliku graficznego.";
+        resDiv.innerHTML = "<strong>Błąd sprzętowy:</strong> Nie udało się załadować struktury pliku graficznego.";
         spinner.style.display = "none";
         URL.revokeObjectURL(img.src);
       };
@@ -282,17 +272,7 @@
     }
 
     function showEditForm() {
-      const savedData = localStorage.getItem(currentTicketId);
-      if (savedData) {
-        const parsed = JSON.parse(savedData);
-        document.getElementById('inputTariff').value = parsed.tariff;
-        document.getElementById('inputRoute').value = parsed.route;
-        document.getElementById('inputTime').value = parsed.time;
-      } else {
-        document.getElementById('inputTariff').value = "U: 1 | -37%";
-        document.getElementById('inputRoute').value = "";
-        document.getElementById('inputTime').value = "Odjazd:  | Przyjazd: ";
-      }
+      document.getElementById('infoId').innerText = currentTicketId;
       document.getElementById('editPanel').style.display = "block";
     }
 
@@ -308,6 +288,7 @@
       document.getElementById('infoRoute').innerText = routeVal;
       document.getElementById('infoTime').innerText = timeVal;
       document.getElementById('editPanel').style.display = "none";
+      document.getElementById('ticketInfo').style.display = "block";
     }
   </script>
 </body>
