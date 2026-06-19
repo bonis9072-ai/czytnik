@@ -10,8 +10,21 @@
     body { font-family: sans-serif; background: #f4f7f6; padding: 20px; text-align: center; }
     .card { background: white; padding: 20px; border-radius: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); max-width: 400px; margin: auto; }
     button { width: 100%; padding: 15px; border: none; border-radius: 12px; background: #FF6600; color: white; font-weight: 700; cursor: pointer; }
-    #result { margin-top: 20px; padding: 15px; background: #eef; border-radius: 10px; font-size: 14px; text-align: left; }
-    #qrCanvas { margin-top: 20px; }
+    
+    /* Styl dla kółeczka (spinnera) */
+    .spinner {
+      border: 4px solid #f3f3f3;
+      border-top: 4px solid #FF6600;
+      border-radius: 50%;
+      width: 30px;
+      height: 30px;
+      animation: spin 1s linear infinite;
+      margin: 20px auto;
+      display: none; /* Ukryty na początku */
+    }
+    @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+    
+    #result { margin-top: 20px; font-size: 14px; }
   </style>
 </head>
 <body>
@@ -20,7 +33,8 @@
     <button onclick="document.getElementById('fileInput').click()">📷 Skanuj bilet</button>
     <input type="file" id="fileInput" accept="image/*" capture="environment" style="display:none;" onchange="processTicket(this)">
     
-    <div id="result">Czekam na skanowanie...</div>
+    <div id="spinner" class="spinner"></div>
+    <div id="result"></div>
     <canvas id="qrCanvas"></canvas>
   </div>
 
@@ -28,25 +42,29 @@
     async function processTicket(input) {
       const file = input.files[0];
       const resDiv = document.getElementById('result');
+      const spinner = document.getElementById('spinner');
       const canvas = document.getElementById('qrCanvas');
       
       if (!file) return;
+
+      // Pokazujemy spinner, czyścimy wyniki
+      spinner.style.display = "block";
       resDiv.innerText = "Analizuję obraz...";
+      canvas.style.display = "none";
 
       try {
-        // OCR - odczyt tekstu
         const { data: { text } } = await Tesseract.recognize(file, 'pol');
         
-        // Wyciąganie danych
-        const ticketId = text.match(/ID:\s*(\d+)/i)?.[1] || "Nie znaleziono ID";
+        const ticketId = text.match(/ID:\s*(\d+)/i)?.[1] || "Brak ID";
         const train = text.match(/POC\.\s*(\d+)/i)?.[1] || "Nieznany";
         
         resDiv.innerHTML = `<strong>Znaleziono:</strong><br>ID: ${ticketId}<br>Pociąg: ${train}`;
-
-        // Generowanie kodu QR
+        canvas.style.display = "block";
         QRCode.toCanvas(canvas, `Bilet IC ID:${ticketId} Pociag:${train}`, { width: 200 });
       } catch (err) {
         resDiv.innerText = "Błąd: " + err.message;
+      } finally {
+        spinner.style.display = "none"; // Chowamy spinner po zakończeniu
       }
     }
   </script>
