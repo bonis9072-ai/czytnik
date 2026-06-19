@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="UTF-8">
+    <title>BIC - Generator Biletów</title>
+    <script src="https://cdn.jsdelivr.net/npm/bwip-js@4.5.1/dist/bwip-js.min.js"></script>
+    <style>
+        body { font-family: sans-serif; padding: 20px; max-width: 400px; margin: auto; background: #fff; }
+        table { width: 100%; border-collapse: collapse; margin-bottom: 20px; }
+        td { border: 1px solid #000; padding: 8px; font-size: 14px; }
+        input { width: 100%; border: none; font-size: 14px; outline: none; }
+        canvas { width: 100%; height: 120px; display: block; border: 1px solid #000; padding: 10px; box-sizing: border-box; }
+        h3 { text-align: center; }
+    </style>
+</head>
+<body>
+
+    <h3>Dane Biletu</h3>
+    <table>
+        <tr><td>Data Odjazdu</td><td><input type="text" value="19.06.2026"></td></tr>
+        <tr><td>Godz. Odjazdu</td><td><input type="text" value="00:14"></td></tr>
+        <tr><td>Stacja</td><td><input type="text" value="Kraków Gł. -> Legionowo"></td></tr>
+        <tr><td>Wagon / Miejsce</td><td><input type="text" value="Brak / Brak"></td></tr>
+        <tr><td>Nr Biletu (ZZ)</td><td><input type="text" id="idBiletu" placeholder="518520683708" oninput="generujKod()"></td></tr>
+    </table>
+
+    <canvas id="barcode"></canvas>
+
+    <script>
+        function generujKod() {
+            const val = document.getElementById('idBiletu').value;
+            const canvas = document.getElementById('barcode');
+            if(val.length >= 10) {
+                bwipjs.toCanvas(canvas, {
+                    bcid: 'code128',
+                    text: val,
+                    scale: 3,
+                    height: 20,
+                    includetext: false 
+                });
+            }
+        }
+    </script>
+</body>
+</html>
