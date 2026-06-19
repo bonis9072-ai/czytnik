@@ -2,43 +2,57 @@
 <html lang="pl">
 <head>
     <meta charset="UTF-8">
-    <title>BIC - Skaner Kodu 1:1</title>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/quagga/0.12.1/quagga.min.js"></script>
+    <title>BIC - Czytnik Biletów PKP</title>
+    <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bwip-js@4.5.1/dist/bwip-js.min.js"></script>
     <style>
-        body { font-family: sans-serif; padding: 20px; text-align: center; }
-        #canvas { margin-top: 20px; border: 1px solid #000; }
-        .result-box { margin-top: 20px; font-weight: bold; }
+        body { font-family: sans-serif; padding: 20px; background: #f4f4f4; }
+        .card { max-width: 450px; margin: auto; background: white; padding: 20px; border-radius: 12px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+        table { width: 100%; border-collapse: collapse; margin-top: 15px; }
+        td { border: 1px solid #ddd; padding: 8px; font-size: 13px; }
+        input { width: 100%; border: none; font-weight: bold; }
+        #barcode { width: 100%; height: 100px; margin-top: 20px; display: block; }
     </style>
 </head>
 <body>
-    <h2>Skaner Kodu ze Zdjęcia</h2>
-    <input type="file" id="upload" accept="image/*">
-    <div id="result" class="result-box"></div>
-    <canvas id="canvas"></canvas>
 
-    <script>
-        document.getElementById('upload').addEventListener('change', function(e) {
-            const file = e.target.files[0];
-            const reader = new FileReader();
-            
-            reader.onload = function(event) {
-                Quagga.decodeSingle({
-                    src: event.target.result,
-                    numOfWorkers: 0,
-                    decoder: { readers: ["code_128_reader"] }, // Standard PKP
-                    locate: true
-                }, function(result) {
-                    if(result && result.codeResult) {
-                        document.getElementById('result').innerText = "Kod odczytany: " + result.codeResult.code;
-                        // Tutaj rysujemy kod "1:1" (czysty)
-                        alert("Kod odczytany: " + result.codeResult.code);
-                    } else {
-                        alert("Nie udało się odczytać kodu ze zdjęcia. Spróbuj przyciąć zdjęcie do samych pasków.");
-                    }
-                });
-            };
-            reader.readAsDataURL(file);
-        });
-    </script>
+<div class="card">
+    <h3>Skaner Biletu BIC</h3>
+    <input type="file" id="upload" accept="image/*">
+    
+    <table>
+        <tr><td>Stacja Początkowa</td><td><input type="text" id="start" value="Kraków Gł."></td></tr>
+        <tr><td>Stacja Końcowa</td><td><input type="text" id="end" value="Legionowo"></td></tr>
+        <tr><td>Godz. Odjazdu</td><td><input type="text" id="dep" value="00:14"></td></tr>
+        <tr><td>Godz. Przyjazdu</td><td><input type="text" id="arr" value="05:22"></td></tr>
+        <tr><td>Ulga</td><td><input type="text" id="discount" value="37%"></td></tr>
+        <tr><td>Wagon/Miejsce</td><td><input type="text" id="seat" value="Brak"></td></tr>
+    </table>
+    
+    <canvas id="barcode"></canvas>
+</div>
+
+<script>
+    document.getElementById('upload').addEventListener('change', async (e) => {
+        const file = e.target.files[0];
+        const { data: { text } } = await Tesseract.recognize(file, 'pol');
+        
+        // Automatyczne wypełnianie na podstawie zdjęcia
+        if(text.includes("KRAKOW")) document.getElementById('start').value = "Kraków Gł.";
+        if(text.includes("LEGIONOWO")) document.getElementById('end').value = "Legionowo";
+        
+        // Wyciąganie numeru do kodu (np. 518520683708)
+        const idMatch = text.match(/\d{12}/);
+        if(idMatch) {
+            bwipjs.toCanvas('barcode', {
+                bcid: 'code128',
+                text: idMatch[0],
+                scale: 3,
+                height: 15,
+                includetext: false // Kod bez cyferek pod spodem
+            });
+        }
+    });
+</script>
 </body>
 </html>
