@@ -3,108 +3,58 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>BIC - Skaner Biletów PKP</title>
-  
+  <title>BIC - Uniwersalny Czytnik</title>
   <script src="https://unpkg.com/html5-qrcode"></script>
-  <script src="https://cdn.jsdelivr.net/npm/bwip-js@4.5.1/dist/bwip-js.min.js"></script>
-  
   <style>
-    body { font-family: sans-serif; background: #f4f7f6; padding: 20px; text-align: center; color: #333; margin: 0; min-height: 100vh; }
-    .card { background: white; padding: 20px; border-radius: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); max-width: 400px; margin: auto; }
-    
-    button { width: 100%; padding: 15px; border: none; border-radius: 12px; background: #FF6600; color: white; font-weight: 700; cursor: pointer; font-size: 16px; margin-bottom: 15px; }
-    
-    #statusPanel { display: none; margin-top: 15px; padding: 12px; border-radius: 10px; font-size: 13px; font-weight: 500; word-break: break-word; }
-    
-    /* Wygenerowana sekcja dla konduktora */
-    .barcode-output { display: none; margin-top: 25px; padding: 15px; background: #fff; border: 2px dashed #FF6600; border-radius: 12px; }
-    canvas { max-width: 100%; height: auto; margin-top: 10px; background: white; padding: 5px; }
-
-    .ticket-details { margin-top: 15px; padding: 12px; background: #f8f9fa; border-radius: 8px; text-align: left; border-left: 4px solid #FF6600; font-size: 13px; }
-    .info-row { display: flex; justify-content: space-between; margin-bottom: 6px; }
-    .info-label { font-weight: bold; color: #666; }
-    .info-value { font-weight: 600; color: #000; }
+    body { font-family: sans-serif; background: #222; padding: 20px; color: white; text-align: center; }
+    .card { background: #333; padding: 20px; border-radius: 20px; max-width: 400px; margin: auto; }
+    button { width: 100%; padding: 20px; border: none; border-radius: 15px; background: #007bff; color: white; font-weight: bold; font-size: 18px; }
+    #result { margin-top: 20px; padding: 15px; border-radius: 10px; font-weight: bold; }
   </style>
 </head>
 <body>
-
   <div class="card">
-    <h2>BIC - Skaner PKP</h2>
-    <p style="font-size: 13px; color: #666; margin-bottom: 20px;">Wgraj zdjęcie papierowego biletu. Nowy silnik automatycznie zlokalizuje i odczyta gęste paski kodu kreskowego.</p>
-    
-    <button onclick="document.getElementById('fileInput').click()">📷 Wybierz zdjęcie biletu</button>
-    <input type="file" id="fileInput" accept="image/*" style="display:none;" onchange="scanTicketFile(this)">
-    
-    <div id="statusPanel"></div>
-
-    <div id="barcodeOutput" class="barcode-output">
-      <span style="font-size: 11px; font-weight: bold; color: #FF6600; text-transform: uppercase;">ZREPLIKOWANY KOD DLA KONDUKTORA</span>
-      <br>
-      <canvas id="barcodeCanvas"></canvas>
-      
-      <div class="ticket-details">
-        <div class="info-row"><span class="info-label">Trasa:</span><span class="info-value">Warszawa Wsch. -> Lublin Główny</span></div>
-        <div class="info-row"><span class="info-label">Godzina:</span><span class="info-value">11:21 -> 13:13</span></div>
-        <div class="info-row"><span class="info-label">Wagon / Miejsce:</span><span class="info-value">Wag. 12 / m. 71 KOR.</span></div>
-        <div class="info-row"><span class="info-label">Cena:</span><span class="info-value">19,00 PLN (SuperPromo)</span></div>
-      </div>
-    </div>
+    <h2>Uniwersalny Skaner</h2>
+    <button onclick="document.getElementById('fileInput').click()">Wybierz dowolne zdjęcie</button>
+    <input type="file" id="fileInput" accept="image/*" style="display:none;" onchange="readAnyImage(this)">
+    <div id="result"></div>
   </div>
 
   <script>
-    // Inicjalizacja nowego parsera lokalnego
-    const html5QrCode = new Html5Qrcode("statusPanel");
-
-    function scanTicketFile(input) {
+    async function readAnyImage(input) {
+      const resultDiv = document.getElementById('result');
       const file = input.files[0];
       if (!file) return;
 
-      const statusDiv = document.getElementById('statusPanel');
-      const outputDiv = document.getElementById('barcodeOutput');
-      
-      // Pokazujemy ładowanie
-      outputDiv.style.display = "none";
-      statusDiv.style.display = "block";
-      statusDiv.style.background = "#fff3cd";
-      statusDiv.style.color = "#856404";
-      statusDiv.innerHTML = "<strong>Nowy Silnik:</strong> Przetwarzanie i usuwanie szumów z kodu kreskowego...";
+      resultDiv.innerText = "Przetwarzam zdjęcie...";
+      resultDiv.style.background = "#555";
 
-      // Html5Qrcode posiada zaawansowane filtry wyostrzania dedykowane gęstym kodom 1D
-      html5QrCode.scanFile(file, true)
-        .then(decodedText => {
-          // SUKCES: Kod został odkodowany!
-          statusDiv.style.background = "#d4edda";
-          statusDiv.style.color = "#155724";
-          statusDiv.innerHTML = "<strong>Sukces!</strong> Kod kreskowy został poprawnie odczytany ze zdjęcia.";
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        const img = new Image();
+        img.src = e.target.result;
+        img.onload = function() {
+          // Tworzymy canvas, który wyostrza zdjęcie przed skanem
+          const canvas = document.createElement('canvas');
+          canvas.width = img.width;
+          canvas.height = img.height;
+          const ctx = canvas.getContext('2d');
+          ctx.filter = 'contrast(200%) grayscale(100%)'; // Klucz do sukcesu: czarno-biały kontrast
+          ctx.drawImage(img, 0, 0);
           
-          renderBarcode(decodedText);
-        })
-        .catch(err => {
-          // BŁĄD ODCZYTU
-          statusDiv.style.background = "#f8d7da";
-          statusDiv.style.color = "#721c24";
-          statusDiv.innerHTML = "<strong>Błąd odczytu pasków:</strong> Silnik nie mógł jednoznacznie dopasować linii. Upewnij się, że zdjęcie kodu nie jest rozmyte, zgięte lub zrobione pod dużym kątem.";
-        });
-    }
-
-    function renderBarcode(rawCodeData) {
-      const canvas = document.getElementById('barcodeCanvas');
-      const outputDiv = document.getElementById('barcodeOutput');
-
-      try {
-        // Generujemy idealne, wektorowe paski CODE 128 na podstawie odczytanych danych binarnego standardu biletowego
-        bwipjs.toCanvas(canvas, {
-          bcid: 'code128',
-          text: rawCodeData,
-          scale: 3,
-          height: 14,
-          includetext: false
-        });
-
-        outputDiv.style.display = "block";
-      } catch (e) {
-        alert("Błąd podczas generowania grafiki kodu: " + e.message);
-      }
+          const html5QrCode = new Html5Qrcode("result");
+          html5QrCode.scanFile(canvas.toDataURL(), true)
+            .then(decodedText => {
+              resultDiv.style.background = "green";
+              resultDiv.innerText = "ODCZYTANO: " + decodedText;
+            })
+            .catch(err => {
+              resultDiv.style.background = "red";
+              resultDiv.innerText = "Nie udało się odczytać. Zdjęcie może być zbyt niewyraźne.";
+            });
+        };
+      };
+      reader.readAsDataURL(file);
     }
   </script>
 </body>
