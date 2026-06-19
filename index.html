@@ -9,8 +9,9 @@
   <style>
     body { font-family: sans-serif; background: #f4f7f6; padding: 20px; text-align: center; }
     .card { background: white; padding: 20px; border-radius: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); max-width: 400px; margin: auto; }
-    button { width: 100%; padding: 15px; border: none; border-radius: 12px; background: #FF6600; color: white; font-weight: 700; margin-bottom: 20px; }
-    #ticketDetails { text-align: left; margin-bottom: 20px; font-size: 14px; }
+    button { width: 100%; padding: 15px; border: none; border-radius: 12px; background: #FF6600; color: white; font-weight: 700; cursor: pointer; }
+    #result { margin-top: 20px; padding: 15px; background: #eef; border-radius: 10px; font-size: 14px; text-align: left; }
+    #qrCanvas { margin-top: 20px; }
   </style>
 </head>
 <body>
@@ -19,32 +20,34 @@
     <button onclick="document.getElementById('fileInput').click()">📷 Skanuj bilet</button>
     <input type="file" id="fileInput" accept="image/*" capture="environment" style="display:none;" onchange="processTicket(this)">
     
-    <div id="ticketDetails"></div>
+    <div id="result">Czekam na skanowanie...</div>
     <canvas id="qrCanvas"></canvas>
   </div>
 
   <script>
     async function processTicket(input) {
       const file = input.files[0];
-      const details = document.getElementById('ticketDetails');
-      details.innerText = "Analizuję bilet...";
-
-      const { data: { text } } = await Tesseract.recognize(file, 'pol');
+      const resDiv = document.getElementById('result');
+      const canvas = document.getElementById('qrCanvas');
       
-      // Wyciąganie danych za pomocą wyrażeń regularnych (Regex)
-      const ticketId = text.match(/ID:(\d+)/)?.[1] || "Nieznane";
-      const route = text.match(/(\w+ Wsch\.)\s*=>\s*(\w+ Główny)/i) || [];
-      const train = text.match(/POC\.\s*(\d+)/)?.[1] || "Nieznane";
+      if (!file) return;
+      resDiv.innerText = "Analizuję obraz...";
 
-      details.innerHTML = `
-        <strong>ID:</strong> ${ticketId}<br>
-        <strong>Trasa:</strong> ${route[1] || "Warszawa"} - ${route[2] || "Lublin"}<br>
-        <strong>Pociąg:</strong> IC ${train}
-      `;
+      try {
+        // OCR - odczyt tekstu
+        const { data: { text } } = await Tesseract.recognize(file, 'pol');
+        
+        // Wyciąganie danych
+        const ticketId = text.match(/ID:\s*(\d+)/i)?.[1] || "Nie znaleziono ID";
+        const train = text.match(/POC\.\s*(\d+)/i)?.[1] || "Nieznany";
+        
+        resDiv.innerHTML = `<strong>Znaleziono:</strong><br>ID: ${ticketId}<br>Pociąg: ${train}`;
 
-      // Generowanie QR
-      const qrData = `Bilet IC ID:${ticketId}, Pociag:${train}, Trasa:${route[1]}-${route[2]}`;
-      QRCode.toCanvas(document.getElementById('qrCanvas'), qrData, { width: 200 });
+        // Generowanie kodu QR
+        QRCode.toCanvas(canvas, `Bilet IC ID:${ticketId} Pociag:${train}`, { width: 200 });
+      } catch (err) {
+        resDiv.innerText = "Błąd: " + err.message;
+      }
     }
   </script>
 </body>
