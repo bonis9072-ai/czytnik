@@ -2,45 +2,43 @@
 <html lang="pl">
 <head>
     <meta charset="UTF-8">
-    <title>BIC - Generator</title>
-    <script src="https://cdn.jsdelivr.net/npm/bwip-js@4.5.1/dist/bwip-js.min.js"></script>
+    <title>BIC - Skaner Kodu 1:1</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/quagga/0.12.1/quagga.min.js"></script>
     <style>
-        body { font-family: Arial, sans-serif; background: white; padding: 20px; }
-        .input-group { margin-bottom: 10px; }
-        input { width: 100%; padding: 10px; border: 1px solid #000; box-sizing: border-box; }
-        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
-        td { border: 1px solid #000; padding: 10px; }
-        #barcode { margin-top: 20px; width: 100%; }
+        body { font-family: sans-serif; padding: 20px; text-align: center; }
+        #canvas { margin-top: 20px; border: 1px solid #000; }
+        .result-box { margin-top: 20px; font-weight: bold; }
     </style>
 </head>
 <body>
-
-    <div class="input-group">
-        <input type="text" id="zz" placeholder="Wpisz numer ZZ (np. ZZ000033755)" oninput="draw()">
-    </div>
-    
-    <table id="biletyInfo">
-        <tr><td>Data/Godz Odjazdu:</td><td><input type="text" id="dep" placeholder="15.12 11:21"></td></tr>
-        <tr><td>Stacja:</td><td><input type="text" id="stacja" placeholder="Warszawa Wsch. -> Lublin"></td></tr>
-        <tr><td>Wagon/Miejsce:</td><td><input type="text" id="miejsce" placeholder="12 / 71"></td></tr>
-    </table>
-
-    <canvas id="barcode"></canvas>
+    <h2>Skaner Kodu ze Zdjęcia</h2>
+    <input type="file" id="upload" accept="image/*">
+    <div id="result" class="result-box"></div>
+    <canvas id="canvas"></canvas>
 
     <script>
-        function draw() {
-            const zz = document.getElementById('zz').value;
-            const canvas = document.getElementById('barcode');
-            if(zz.length > 5) {
-                bwipjs.toCanvas(canvas, {
-                    bcid: 'code128',
-                    text: zz,
-                    scale: 4,
-                    height: 20,
-                    includetext: false
+        document.getElementById('upload').addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            const reader = new FileReader();
+            
+            reader.onload = function(event) {
+                Quagga.decodeSingle({
+                    src: event.target.result,
+                    numOfWorkers: 0,
+                    decoder: { readers: ["code_128_reader"] }, // Standard PKP
+                    locate: true
+                }, function(result) {
+                    if(result && result.codeResult) {
+                        document.getElementById('result').innerText = "Kod odczytany: " + result.codeResult.code;
+                        // Tutaj rysujemy kod "1:1" (czysty)
+                        alert("Kod odczytany: " + result.codeResult.code);
+                    } else {
+                        alert("Nie udało się odczytać kodu ze zdjęcia. Spróbuj przyciąć zdjęcie do samych pasków.");
+                    }
                 });
-            }
-        }
+            };
+            reader.readAsDataURL(file);
+        });
     </script>
 </body>
 </html>
