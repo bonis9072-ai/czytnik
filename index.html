@@ -3,48 +3,48 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>BIC - Skaner & Pamięć</title>
+  <title>BIC - Skaner</title>
   <script src="https://unpkg.com/html5-qrcode"></script>
   <style>
     body { font-family: sans-serif; background: #e0e0e0; padding: 20px; text-align: center; }
     .card { background: white; padding: 20px; border-radius: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); max-width: 400px; margin: auto; }
     button { width: 100%; padding: 15px; border: none; border-radius: 12px; background: #FF6600; color: white; font-weight: 700; font-size: 16px; margin-bottom: 10px; }
-    #resultPanel { margin-top: 20px; padding: 15px; border-radius: 12px; display: none; font-weight: bold; }
+    #resultPanel { margin-top: 20px; padding: 15px; border-radius: 12px; font-weight: bold; background: #eee; min-height: 50px; }
   </style>
 </head>
 <body>
 
   <div class="card">
-    <h2>BIC - Skaner & Pamięć</h2>
-    <p>Wybierz zdjęcie biletu. Skaner odczyta kod.</p>
+    <h2>Skaner BIC</h2>
+    <p>Wgraj zdjęcie, na którym <b>kod jest wyraźnie widoczny</b>.</p>
     
-    <button onclick="document.getElementById('fileInput').click()">📷 Skanuj bilet (Papier / PDF)</button>
-    <input type="file" id="fileInput" accept="image/*" style="display:none;" onchange="handleFile(this)">
+    <button onclick="document.getElementById('fileInput').click()">📷 Wgraj zdjęcie biletu</button>
+    <input type="file" id="fileInput" accept="image/*" style="display:none;" onchange="doScan(this)">
     
-    <div id="resultPanel"></div>
+    <div id="resultPanel">Oczekiwanie na zdjęcie...</div>
   </div>
 
   <script>
-    const html5QrCode = new Html5Qrcode("resultPanel");
-
-    function handleFile(input) {
+    function doScan(input) {
       const file = input.files[0];
       const res = document.getElementById('resultPanel');
       if (!file) return;
 
-      res.style.display = "block";
-      res.style.background = "#fff3cd";
-      res.innerText = "Skanowanie w toku...";
+      res.innerText = "Skanowanie...";
+      
+      const html5QrCode = new Html5Qrcode("resultPanel");
+      
+      // Klucz do sukcesu: ustawienia konfiguracyjne dla słabej jakości zdjęć
+      const config = { fps: 10, qrbox: { width: 250, height: 250 } };
 
-      // Używamy dedykowanego skanera plików
       html5QrCode.scanFile(file, true)
         .then(decodedText => {
           res.style.background = "#d4edda";
-          res.innerText = "ODCZYTANO KOD: " + decodedText;
+          res.innerText = "ODCZYTANO: " + decodedText;
         })
         .catch(err => {
           res.style.background = "#f8d7da";
-          res.innerText = "Nie udało się odczytać. Upewnij się, że zdjęcie jest ostre.";
+          res.innerText = "Błąd: Kod nie jest w całości lub jest zbyt rozmyty. Przytnij zdjęcie do samego kodu i spróbuj ponownie.";
         });
     }
   </script>
