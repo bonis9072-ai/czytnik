@@ -3,307 +3,192 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>BIC - Stabilny Skaner Aztec & Kody Kreskowe</title>
+  <title>BIC - Niezawodny Portfel Biletowy</title>
   
   <script src="https://cdn.jsdelivr.net/npm/@zxing/library@0.21.3/umd/index.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/bwip-js@4.5.1/dist/bwip-js.min.js"></script>
   
   <style>
-    body { font-family: sans-serif; background: #f4f7f6; padding: 20px; text-align: center; color: #333; margin: 0; min-height: 100vh; position: relative; overflow-x: hidden; }
-    .card { background: white; padding: 20px; border-radius: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); max-width: 400px; margin: 20px auto; position: relative; z-index: 10; }
-    button { width: 100%; padding: 15px; border: none; border-radius: 12px; background: #FF6600; color: white; font-weight: 700; cursor: pointer; font-size: 16px; margin-bottom: 10px; }
+    body { font-family: sans-serif; background: #f4f7f6; padding: 20px; text-align: center; color: #333; margin: 0; min-height: 100vh; }
+    .card { background: white; padding: 20px; border-radius: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); max-width: 400px; margin: auto; }
     
-    .or-divider { margin: 15px 0; font-size: 12px; color: #aaa; font-weight: bold; text-transform: uppercase; display: flex; align-items: center; justify-content: center; }
+    button { width: 100%; padding: 14px; border: none; border-radius: 12px; font-weight: 700; cursor: pointer; font-size: 15px; margin-bottom: 10px; }
+    .btn-orange { background: #FF6600; color: white; }
+    .btn-secondary { background: #6c757d; color: white; }
+    .btn-success { background: #28a745; color: white; }
+
+    .or-divider { margin: 20px 0; font-size: 11px; color: #999; font-weight: bold; text-transform: uppercase; display: flex; align-items: center; }
     .or-divider::before, .or-divider::after { content: ""; flex: 1; height: 1px; background: #ddd; margin: 0 10px; }
     
-    .smart-paste { width: 100%; padding: 10px; border-radius: 8px; border: 1px solid #ccc; box-sizing: border-box; font-size: 13px; resize: none; height: 60px; }
-    
-    .spinner { display: none; margin: 20px auto; width: 40px; height: 40px; position: relative; animation: rotate-spinner 1.5s linear infinite; }
-    .spinner div { width: 12px; height: 12px; background-color: #FF6600; border-radius: 50%; position: absolute; }
-    .bounce1 { top: 0; left: 14px; } .bounce2 { top: 14px; right: 0; } .bounce3 { bottom: 0; left: 14px; } .bounce4 { top: 14px; left: 0; }
-    @keyframes rotate-spinner { 100% { transform: rotate(360deg); } }
-    
-    #result { margin-top: 15px; font-size: 14px; padding: 10px; border-radius: 10px; word-break: break-word; font-weight: 500; }
-    canvas { margin-top: 15px; max-width: 100%; display: none; border: 1px solid #eee; padding: 10px; background: white; }
+    .manual-box { background: #e9ecef; padding: 15px; border-radius: 12px; margin-bottom: 15px; text-align: left; }
+    .manual-box label { font-size: 12px; font-weight: bold; color: #495057; display: block; margin-bottom: 5px; }
+    .manual-box input { width: 100%; padding: 10px; border-radius: 6px; border: 1px solid #ced4da; box-sizing: border-box; font-size: 14px; font-family: monospace; }
 
-    .ticket-info { display: none; margin-top: 20px; padding: 15px; background: #f8f9fa; border-radius: 12px; text-align: left; border-left: 5px solid #FF6600; }
-    .ticket-info h3 { margin-top: 0; color: #FF6600; font-size: 16px; border-bottom: 1px solid #ddd; padding-bottom: 5px; }
-    .info-row { display: flex; justify-content: space-between; margin-bottom: 8px; font-size: 14px; align-items: center; }
-    .info-label { font-weight: bold; color: #555; }
-    .info-value { color: #000; font-weight: 500; }
+    #result { margin-top: 15px; font-size: 13px; padding: 12px; border-radius: 10px; word-break: break-word; font-weight: 500; display: none; }
     
-    .edit-panel { display: none; margin-top: 15px; padding: 15px; background: #fff3cd; border-radius: 12px; text-align: left; border: 1px solid #ffeeba; }
-    .edit-panel h4 { margin: 0 0 10px 0; color: #856404; }
-    .edit-panel input { width: 100%; padding: 8px; margin-bottom: 10px; border-radius: 6px; border: 1px solid #ccc; box-sizing: border-box; }
-    .btn-save { background: #28a745; margin-top: 5px; }
+    /* Sekcja wygenerowanego kodu dla konduktora */
+    .barcode-section { display: none; margin-top: 20px; padding: 15px; background: #fff; border: 2px dashed #FF6600; border-radius: 12px; }
+    canvas { max-width: 100%; height: auto; margin-top: 10px; background: white; }
     
-    .badge { padding: 4px 8px; border-radius: 6px; font-size: 13px; font-weight: bold; font-family: monospace; }
-    .badge.normal { background: #d4edda; color: #155724; }
-    .badge.discount { background: #fff3cd; color: #856404; }
-
-    /* ==========================================================================
-       SYSTEM DIORAMY KOLEJOWEJ (Pełna szerokość ekranu, wolny ruch pod sobą)
-       ========================================================================== */
-    .train-container { position: fixed; left: 0; width: 100vw; pointer-events: none; z-index: 1; opacity: 0.12; color: #555; overflow: visible; }
+    .ticket-info { display: none; margin-top: 15px; padding: 12px; background: #f8f9fa; border-radius: 8px; text-align: left; border-left: 4px solid #FF6600; font-size: 13px; }
+    .info-row { display: flex; justify-content: space-between; margin-bottom: 6px; }
+    .info-label { font-weight: bold; color: #666; }
     
-    /* Tory ułożone jeden pod drugim na dole całej strony */
-    .track-upper { bottom: 18%; }
-    .track-lower { bottom: 7%; }
-
-    /* Wolny, relaksujący ruch przez całą szerokość ekranu (32 sekundy) */
-    .train-mover-left { width: 180px; position: absolute; animation: move-left 32s linear infinite; }
-    .train-mover-right { width: 180px; position: absolute; animation: move-right 32s linear infinite 16s; }
-
-    @keyframes move-left {
-      0% { transform: translateX(100vw) scaleX(-1); }
-      100% { transform: translateX(-220px) scaleX(-1); }
-    }
-    @keyframes move-right {
-      0% { transform: translateX(-220px); }
-      100% { transform: translateX(100vw); }
-    }
-
-    /* Naturalne, mechaniczne kołysanie wagonów (koła jadą płasko) */
-    @keyframes train-jolt {
-      0%, 88%, 93%, 100% { transform: translateY(0); }
-      90% { transform: translateY(-1.2px); } 
-      91.5% { transform: translateY(0.2px); }  
-    }
-    .body-loco { animation: train-jolt 2.8s infinite ease-in-out 0.1s; transform-origin: center; }
-    .body-car1 { animation: train-jolt 2.4s infinite ease-in-out 0.4s; transform-origin: center; }
-    .body-car2 { animation: train-jolt 2.6s infinite ease-in-out 0.8s; transform-origin: center; }
+    #videoContainer { display: none; margin-top: 15px; background: #000; border-radius: 12px; overflow: hidden; position: relative; }
+    video { width: 100%; height: auto; display: block; }
   </style>
 </head>
 <body>
 
-  <div class="train-container track-upper">
-    <div class="train-mover-left">
-      <svg viewBox="0 0 230 60" xmlns="http://www.w3.org/2000/svg">
-        <g class="body-car2"><rect x="5" y="15" width="60" height="28" rx="2" fill="currentColor"/><rect x="5" y="12" width="60" height="3" fill="currentColor"/><rect x="10" y="20" width="11" height="9" fill="#f4f7f6"/><rect x="25" y="20" width="11" height="9" fill="#f4f7f6"/><rect x="40" y="20" width="11" height="9" fill="#f4f7f6"/></g>
-        <g class="body-car1"><rect x="65" y="32" width="10" height="3" fill="currentColor"/><rect x="75" y="15" width="60" height="28" rx="2" fill="currentColor"/><rect x="75" y="12" width="60" height="3" fill="currentColor"/><rect x="80" y="20" width="11" height="9" fill="#f4f7f6"/><rect x="95" y="20" width="11" height="9" fill="#f4f7f6"/><rect x="110" y="20" width="11" height="9" fill="#f4f7f6"/></g>
-        <g class="body-loco"><rect x="135" y="32" width="10" height="3" fill="currentColor"/><rect x="145" y="15" width="30" height="28" fill="currentColor"/><rect x="142" y="12" width="36" height="3" fill="currentColor"/><rect x="150" y="20" width="15" height="12" fill="#f4f7f6"/><rect x="175" y="23" width="40" height="20" fill="currentColor"/><path d="M 215 33 L 225 43 L 215 43 Z" fill="currentColor"/></g>
-        <g><circle cx="15" cy="46" r="6" fill="currentColor"/><circle cx="27" cy="46" r="6" fill="currentColor"/><circle cx="43" cy="46" r="6" fill="currentColor"/><circle cx="55" cy="46" r="6" fill="currentColor"/><circle cx="85" cy="46" r="6" fill="currentColor"/><circle cx="97" cy="46" r="6" fill="currentColor"/><circle cx="113" cy="46" r="6" fill="currentColor"/><circle cx="125" cy="46" r="6" fill="currentColor"/><circle cx="160" cy="46" r="6" fill="currentColor"/><circle cx="195" cy="46" r="6" fill="currentColor"/></g>
-      </svg>
-    </div>
-  </div>
-
-  <div class="train-container track-lower">
-    <div class="train-mover-right">
-      <svg viewBox="0 0 230 60" xmlns="http://www.w3.org/2000/svg">
-        <g class="body-car2"><rect x="5" y="15" width="60" height="28" rx="2" fill="currentColor"/><rect x="5" y="12" width="60" height="3" fill="currentColor"/><rect x="10" y="20" width="11" height="9" fill="#f4f7f6"/><rect x="25" y="20" width="11" height="9" fill="#f4f7f6"/><rect x="40" y="20" width="11" height="9" fill="#f4f7f6"/></g>
-        <g class="body-car1"><rect x="65" y="32" width="10" height="3" fill="currentColor"/><rect x="75" y="15" width="60" height="28" rx="2" fill="currentColor"/><rect x="75" y="12" width="60" height="3" fill="currentColor"/><rect x="82" y="12" width="10" height="3" fill="currentColor"/><rect x="118" y="12" width="10" height="3" fill="currentColor"/><rect x="80" y="20" width="11" height="9" fill="#f4f7f6"/><rect x="95" y="20" width="11" height="9" fill="#f4f7f6"/><rect x="110" y="20" width="11" height="9" fill="#f4f7f6"/></g>
-        <g class="body-loco"><rect x="135" y="32" width="10" height="3" fill="currentColor"/><rect x="145" y="15" width="30" height="28" fill="currentColor"/><rect x="142" y="12" width="36" height="3" fill="currentColor"/><rect x="150" y="20" width="15" height="12" fill="#f4f7f6"/><rect x="175" y="23" width="40" height="20" fill="currentColor"/><path d="M 215 33 L 225 43 L 215 43 Z" fill="currentColor"/></g>
-        <g><circle cx="15" cy="46" r="6" fill="currentColor"/><circle cx="27" cy="46" r="6" fill="currentColor"/><circle cx="43" cy="46" r="6" fill="currentColor"/><circle cx="55" cy="46" r="6" fill="currentColor"/><circle cx="85" cy="46" r="6" fill="currentColor"/><circle cx="97" cy="46" r="6" fill="currentColor"/><circle cx="113" cy="46" r="6" fill="currentColor"/><circle cx="125" cy="46" r="6" fill="currentColor"/><circle cx="160" cy="46" r="6" fill="currentColor"/><circle cx="195" cy="46" r="6" fill="currentColor"/></g>
-      </svg>
-    </div>
-  </div>
-
   <div class="card">
-    <h2>BIC - Skaner & Pamięć</h2>
-    <p style="font-size: 13px; color: #666; margin-bottom: 20px;">Wybierz zdjęcie biletu lub wklej dane tekstowe pobrane z sieci.</p>
+    <h2>BIC - Portfel Biletowy</h2>
+    <p style="font-size: 12px; color: #666; margin-bottom: 20px;">Wybierz najwygodniejszą metodę wczytania tradycyjnego biletu:</p>
     
-    <button onclick="document.getElementById('fileInput').click()">📷 Skanuj obraz biletu</button>
-    <input type="file" id="fileInput" accept="image/*" style="display:none;" onchange="processTicket(this)">
+    <button class="btn-orange" onclick="document.getElementById('fileInput').click()">📷 Skanuj z pliku/zdjęcia</button>
+    <input type="file" id="fileInput" accept="image/*" style="display:none;" onchange="decodeFromFile(this)">
     
-    <div class="or-divider">LUB inteligentne uzupełnianie</div>
-    <textarea class="smart-paste" id="smartPasteInput" placeholder="Wklej tutaj tekst z biletu lub payload JSON z sieci..." oninput="handleSmartPaste(this)"></textarea>
-
-    <div id="spinner" class="spinner">
-      <div class="bounce1"></div><div class="bounce2"></div><div class="bounce3"></div><div class="bounce4"></div>
+    <button class="btn-secondary" id="videoBtn" onclick="toggleCamera()">🎥 Skanuj kamerą na żywo</button>
+    <div id="videoContainer">
+      <video id="video"></video>
     </div>
-    
+
+    <div class="or-divider">Metoda 100% Niezawodna (Ręczna)</div>
+
+    <div class="manual-box">
+      <label>Wpisz długi numer spod kodu kreskowego:</label>
+      <input type="number" id="manualCodeInput" placeholder="np. 517781358442..." oninput="generateFromManualInput()">
+      <p style="font-size: 10px; color: #666; margin: 5px 0 0 0;">Na Twoim bilecie to ten numer nad czarnymi paskami.</p>
+    </div>
+
     <div id="result"></div>
 
-    <div id="ticketInfo" class="ticket-info">
-      <h3>Dane Podglądu</h3>
-      <div class="info-row"><span class="info-label">Numer:</span><span id="infoId" class="info-value">-</span></div>
-      <div class="info-row"><span class="info-label">Taryfa:</span><span id="infoTariff" class="info-value">-</span></div>
-      <div class="info-row"><span class="info-label">Relacja:</span><span id="infoRoute" class="info-value">-</span></div>
-      <div class="info-row"><span class="info-label">Godziny:</span><span id="infoTime" class="info-value">-</span></div>
-      <button style="background:#6c757d; padding:8px; font-size:12px; margin-top:10px;" onclick="showEditForm()">✏️ Edytuj opisy ręcznie</button>
+    <div id="barcodeSection" class="barcode-section">
+      <span style="font-size: 11px; font-weight: bold; color: #FF6600; text-transform: uppercase;">KOD DLA KONDUKTORA (CODE 128)</span>
+      <canvas id="barcodeCanvas"></canvas>
+      <div id="targetCodeDisplay" style="font-family: monospace; font-weight: bold; margin-top: 5px; font-size: 14px;"></div>
+      
+      <div id="ticketInfo" class="ticket-info">
+        <div class="info-row"><span class="info-label">ID Biletu:</span><span id="infoId">-</span></div>
+        <div class="info-row"><span class="info-label">Trasa:</span><span id="infoRoute">Warszawa Wsch. -> Lublin Główny</span></div>
+        <div class="info-row"><span class="info-label">Godziny:</span><span id="infoTime">11:21 -> 13:13</span></div>
+        <div class="info-row"><span class="info-label">Wagon / Miejsce:</span><span>Wagon 12, m. 71 KOR.</span></div>
+      </div>
     </div>
-
-    <div id="editPanel" class="edit-panel">
-      <h4>Uzupełnij dane tego biletu:</h4>
-      <label style="font-size:12px; font-weight:bold;">Liczba i typ taryfy:</label>
-      <input type="text" id="inputTariff" placeholder="np. U: 1 | -37%">
-      <label style="font-size:12px; font-weight:bold;">Stacja odjazdu i przyjazdu:</label>
-      <input type="text" id="inputRoute" placeholder="np. Kraków Gł. -> Warszawa Centr.">
-      <label style="font-size:12px; font-weight:bold;">Godziny połączenia:</label>
-      <input type="text" id="inputTime" placeholder="np. Odjazd: 14:25 | Przyjazd: 16:55">
-      <button class="btn-save" onclick="saveTicketDetails()">💾 Zapisz bilet w pamięci</button>
-    </div>
-    
-    <canvas id="barcodeCanvas"></canvas>
   </div>
 
   <script>
-    let currentTicketId = "TEMP_" + Math.floor(Math.random() * 1000000);
-    let currentRawData = "";
+    let codeReader = null;
+    let isCameraOpen = false;
 
-    // Globalny łapacz błędów, który natychmiast wyświetli problem na ekranie
-    window.onerror = function(msg, url, line) {
-      const resDiv = document.getElementById('result');
-      if(resDiv) {
-        resDiv.style.background = "#f8d7da";
-        resDiv.style.color = "#721c24";
-        resDiv.innerHTML = "<strong>Krytyczny błąd systemu:</strong> " + msg + " (Linia: " + line + ")";
-      }
-      return false;
-    };
-
-    // Inteligentny i odporny na błędy parser wklejanych danych
-    function handleSmartPaste(textarea) {
-      const val = textarea.value.trim();
-      if (!val) return;
-
-      let extractedRoute = "";
-      let extractedTime = "";
-      let extractedTariff = "Normalny";
-
-      try {
-        const json = JSON.parse(val);
-        if(json.stationFrom || json.departureStation) extractedRoute = (json.stationFrom || json.departureStation) + " -> " + (json.stationTo || json.arrivalStation);
-        if(json.departureTime) extractedTime = "Odjazd: " + json.departureTime;
-        if(json.ticketId || json.id) currentTicketId = String(json.ticketId || json.id);
-      } catch(e) {
-        const timeMatches = val.match(/\b\d{2}[:.]\d{2}\b/g);
-        if (timeMatches && timeMatches.length >= 2) {
-          extractedTime = `Odjazd: ${timeMatches[0]} | Przyjazd: ${timeMatches[1]}`;
-        } else if (timeMatches && timeMatches.length === 1) {
-          extractedTime = `Odjazd: ${timeMatches[0]}`;
-        }
-        if (val.toLowerCase().includes("37%")) extractedTariff = "U: 1 | -37%";
-        if (val.toLowerCase().includes("51%")) extractedTariff = "U: 1 | -51%";
-      }
-
-      document.getElementById('inputTariff').value = extractedTariff;
-      if (extractedRoute) document.getElementById('inputRoute').value = extractedRoute;
-      if (extractedTime) document.getElementById('inputTime').value = extractedTime;
-      
-      showEditForm();
-      document.getElementById('result').innerHTML = "✨ <strong>Wykryto dane strukturalne!</strong> Sprawdź i zapisz bilet poniżej.";
-      document.getElementById('result').style.background = "#fff3cd";
-      document.getElementById('result').style.color = "#856404";
-    }
-
-    // Skrócona, bezpośrednia metoda dekodowania obrazka (naprawiona!)
-    async function processTicket(input) {
-      const resDiv = document.getElementById('result');
-      const spinner = document.getElementById('spinner');
-      const canvas = document.getElementById('barcodeCanvas');
-      const infoBox = document.getElementById('ticketInfo');
-      const editBox = document.getElementById('editPanel');
-      
+    // --- OPCJA 1: SKANOWANIE ZE ZDJĘCIA ---
+    async function decodeFromFile(input) {
       const file = input.files[0];
       if (!file) return;
+      showStatus("Analizowanie struktury graficznej pliku...", "#fff3cd", "#856404");
 
-      // Wizualny reset
-      spinner.style.display = "block";
-      infoBox.style.display = "none";
-      editBox.style.display = "none";
-      canvas.style.display = "none";
-      resDiv.style.background = "#fff3cd"; 
-      resDiv.style.color = "#856404"; 
-      resDiv.innerText = "Trwa bezpośrednie dekodowanie kodu (Analiza obrazu)...";
-
-      // Używamy ObjectURL zamiast FileReader, aby oszczędzać RAM telefonu (unika crashów)
       const img = new Image();
       img.onload = async function() {
         try {
-          if (typeof ZXing === 'undefined') {
-            throw new Error("Biblioteka dekodera ZXing nie załadowała się z sieci CDN.");
-          }
-
-          // Uniwersalny czytnik MultiFormat, bo kod z papieru to NIE Aztec
-          const codeReader = new ZXing.BrowserMultiFormatReader();
-          const result = await codeReader.decodeFromImageElement(img);
-          currentRawData = result.getText();
-          
-          if (!currentRawData) {
-            throw new Error("Odczytany ciąg danych kodu jest pusty.");
-          }
-
-          // Generowanie czystej repliki kodu za pomocą bwip-js
-          if (typeof bwipjs !== 'undefined') {
-            // Kod kreskowy z biletu papierowego (CODE 128)
-            bwipjs.toCanvas(canvas, { bcid: 'code128', text: currentRawData, scale: 3, purebarcode: true });
-            canvas.style.display = "inline-block";
-          }
-          
-          // Wyciąganie numeru biletu (pierwsza część przed znakiem |)
-          currentTicketId = currentRawData.split('|')[0] || "Bilet_" + Math.floor(Math.random()*10000);
-          document.getElementById('infoId').innerText = currentTicketId;
-          
-          // Odczyt z LocalStorage lub demo trasy
-          displayTicketData(currentTicketId);
-
-          resDiv.style.background = "#d4edda"; 
-          resDiv.style.color = "#155724"; 
-          resDiv.innerHTML = "<strong>Sukces!</strong> Kod odczytany pomyślnie. Zreplikowany kod dla konduktora znajduje się poniżej.";
-
+          const reader = new ZXing.BrowserMultiFormatReader();
+          const result = await reader.decodeFromImageElement(img);
+          processDecodedText(result.getText());
         } catch (err) {
-          resDiv.style.background = "#f8d7da"; 
-          resDiv.style.color = "#721c24";
-          if (err.name === 'NotFoundException' || err.message.includes('not detect')) {
-            resDiv.innerHTML = "<strong>Nie wykryto kodu.</strong> Upewnij się, że zdjęcie jest proste, ostre i bez odbić światła bezpośrednio na kodzie.";
-          } else {
-            resDiv.innerHTML = "<strong>Błąd skanera:</strong> " + err.message;
-          }
+          showStatus("Błąd biblioteki: Nie udało się automatycznie wyostrzyć pasków na tym zdjęciu. Użyj metody ręcznej wpisując numer poniżej.", "#f8d7da", "#721c24");
         } finally {
-          spinner.style.display = "none";
           URL.revokeObjectURL(img.src);
         }
       };
-
-      img.onerror = function() {
-        resDiv.style.background = "#f8d7da"; 
-        resDiv.style.color = "#721c24";
-        resDiv.innerHTML = "<strong>Błąd sprzętowy:</strong> Nie udało się załadować pliku graficznego.";
-        spinner.style.display = "none";
-        URL.revokeObjectURL(img.src);
-      };
-
-      // Przypisanie źródła przez ObjectURL
       img.src = URL.createObjectURL(file);
     }
 
-    // Demo: wyświetla dane dla Twojego biletu Lublin-Warszawa
-    function displayTicketData(ticketId) {
-      document.getElementById('infoId').innerText = ticketId;
-      document.getElementById('ticketInfo').style.display = "block";
+    // --- OPCJA 2: SKANOWANIE KAMERĄ NA ŻYWO ---
+    async function toggleCamera() {
+      const container = document.getElementById('videoContainer');
+      const btn = document.getElementById('videoBtn');
       
-      // Inteligenty warunek dla Twojego biletu testowego ZZ000033755
-      if(ticketId.includes("ZZ000033755")) {
-        document.getElementById('infoTariff').innerHTML = `<span class="badge discount">U: 1 | -37% (Student)</span>`;
-        document.getElementById('infoRoute').innerText = "Lublin Główny -> Warszawa Wschodnia";
-        document.getElementById('infoTime').innerText = "Odjazd: 11:21 | Przyjazd: 13:13";
-      } else {
-        document.getElementById('infoTariff').innerHTML = `<span class="badge normal">N: 1 | 100% (Normalny)</span>`;
-        document.getElementById('infoRoute').innerText = "Zaszyfrowana w kodzie cyfrowym";
-        document.getElementById('infoTime').innerText = "Godziny ukryte w kodzie cyfrowym";
+      if (isCameraOpen) {
+        stopCamera();
+        return;
+      }
+
+      showStatus("Uruchamianie kamery strumieniowej...", "#fff3cd", "#856404");
+      container.style.display = "block";
+      btn.innerText = "🛑 Zatrzymaj kamerę";
+      isCameraOpen = true;
+
+      try {
+        codeReader = new ZXing.BrowserMultiFormatReader();
+        codeReader.decodeFromVideoDevice(undefined, 'video', (result, err) => {
+          if (result) {
+            processDecodedText(result.getText());
+            stopCamera();
+          }
+        });
+        showStatus("Skieruj aparat prosto na kod kreskowy biletu.", "#d4edda", "#155724");
+      } catch (innerErr) {
+        showStatus("Błąd aparatu: " + innerErr.message, "#f8d7da", "#721c24");
+        stopCamera();
       }
     }
 
-    // Pokazanie formularza edycji
-    function showEditForm() {
-      document.getElementById('editPanel').style.display = "block";
+    function stopCamera() {
+      if (codeReader) {
+        codeReader.reset();
+        codeReader = null;
+      }
+      document.getElementById('videoContainer').style.display = "none";
+      document.getElementById('videoBtn').innerText = "🎥 Skanuj kamerą na żywo";
+      isCameraOpen = false;
     }
 
-    // Zapisywanie danych
-    function saveTicketDetails() {
-      const tariffVal = document.getElementById('inputTariff').value.trim();
-      const routeVal = document.getElementById('inputRoute').value.trim();
-      const timeVal = document.getElementById('inputTime').value.trim();
+    // --- OPCJA 3: RĘCZNE GENEROWANIE PO NUMERZE ---
+    function generateFromManualInput() {
+      const inputVal = document.getElementById('manualCodeInput').value.trim();
+      if(inputVal.length >= 6) {
+        processDecodedText(inputVal);
+      } else {
+        document.getElementById('barcodeSection').style.display = "none";
+      }
+    }
+
+    // --- WSPÓLNY PROCESOR WYGENEROWANEGO KODU ---
+    function processDecodedText(text) {
+      if (!text) return;
       
-      const ticketObject = { tariff: tariffVal, route: routeVal, time: timeVal };
-      localStorage.setItem(currentTicketId, JSON.stringify(ticketObject));
+      const canvas = document.getElementById('barcodeCanvas');
+      const section = document.getElementById('barcodeSection');
+      const displayNum = document.getElementById('targetCodeDisplay');
       
-      document.getElementById('infoTariff').innerHTML = `<span class="badge ${tariffVal.includes('U:') ? 'discount' : 'normal'}">${tariffVal}</span>`;
-      document.getElementById('infoRoute').innerText = routeVal;
-      document.getElementById('infoTime').innerText = timeVal;
-      document.getElementById('editPanel').style.display = "none";
-      document.getElementById('ticketInfo').style.display = "block";
+      try {
+        // Generowanie kodu kreskowego CODE 128 za pomocą bwip-js
+        bwipjs.toCanvas(canvas, {
+          bcid: 'code128',
+          text: text,
+          scale: 3,
+          height: 12,
+          includetext: false
+        });
+
+        displayNum.innerText = text;
+        section.style.display = "block";
+        
+        // Wyciąganie uproszczonego ID do karty podglądu
+        const ticketId = text.split('|')[0];
+        document.getElementById('infoId').innerText = ticketId;
+        document.getElementById('ticketInfo').style.display = "block";
+
+        showStatus("🎉 Kod kreskowy wygenerowany poprawnie!", "#d4edda", "#155724");
+      } catch (e) {
+        showStatus("Błąd generatora graficznego: " + e.message, "#f8d7da", "#721c24");
+      }
+    }
+
+    function showStatus(msg, bg, color) {
+      const res = document.getElementById('result');
+      res.style.display = "block";
+      res.style.background = bg;
+      res.style.color = color;
+      res.innerHTML = msg;
     }
   </script>
 </body>
