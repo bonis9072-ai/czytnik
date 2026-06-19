@@ -2,37 +2,70 @@
 <html lang="pl">
 <head>
     <meta charset="UTF-8">
-    <title>BIC - Generator 1:1</title>
+    <title>BIC - Czytnik Biletów</title>
+    <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/bwip-js@4.5.1/dist/bwip-js.min.js"></script>
     <style>
-        body { font-family: sans-serif; background: #e0e0e0; display: flex; justify-content: center; padding: 20px; }
-        .card { background: white; padding: 20px; border-radius: 20px; width: 100%; max-width: 400px; text-align: center; }
-        input { width: 100%; padding: 12px; margin: 10px 0; border: 1px solid #ccc; border-radius: 8px; box-sizing: border-box; }
-        button { width: 100%; padding: 15px; background: #000; color: #fff; border: none; border-radius: 8px; font-weight: bold; }
-        #barcodeCanvas { margin-top: 20px; width: 100%; background: #fff; }
+        body { font-family: sans-serif; background: #f0f0f0; padding: 20px; }
+        .card { background: white; padding: 20px; border-radius: 15px; max-width: 400px; margin: auto; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
+        .data-field { margin: 8px 0; font-size: 14px; }
+        canvas { width: 100%; height: 80px; margin-top: 20px; object-fit: contain; }
     </style>
 </head>
 <body>
+
 <div class="card">
-    <h2>Generator Kodu 1:1</h2>
-    <input type="text" id="codeText" placeholder="Wpisz nr ZZ000033755">
-    <button onclick="renderBarcode()">Generuj kod 1:1</button>
-    <canvas id="barcodeCanvas"></canvas>
+    <h2>BIC - Czytnik</h2>
+    <input type="file" id="fileInput" accept="image/*" onchange="processTicket(this)">
+    
+    <div id="displayArea" style="display:none; margin-top:20px;">
+        <div class="data-field"><b>Trasa:</b> <span id="route">-</span></div>
+        <div class="data-field"><b>Odjazd:</b> <span id="dep">-</span></div>
+        <div class="data-field"><b>Przyjazd:</b> <span id="arr">-</span></div>
+        <div class="data-field"><b>Ulga:</b> <span id="discount">-</span></div>
+        <div class="data-field"><b>Wagon/Miejsce:</b> <span id="seat">-</span></div>
+        <canvas id="barcodeCanvas"></canvas>
+    </div>
 </div>
 
 <script>
-    function renderBarcode() {
-        const text = document.getElementById('codeText').value;
-        const canvas = document.getElementById('barcodeCanvas');
-        
-        // bwip-js generuje kod 1:1 zgodnie ze specyfikacją Code 128
-        bwipjs.toCanvas(canvas, {
-            bcid: 'code128', // Standard PKP
-            text: text,
-            scale: 4,        // Skala zapewniająca czytelność 1:1 dla czytników
-            height: 15,
-            includetext: true
-        });
+    async function processTicket(input) {
+        const file = input.files[0];
+        const display = document.getElementById('displayArea');
+        display.style.display = "block";
+
+        const { data: { text } } = await Tesseract.recognize(file, 'pol');
+
+        // Wyciąganie trasy (np. Warszawa Wsch. => Lublin Główny)
+        const routeMatch = text.match(/(.*) => (.*)/);
+        if(routeMatch) document.getElementById('route').innerText = `${routeMatch[1].trim()} - ${routeMatch[2].trim()}`;
+
+        // Wyciąganie godzin
+        const timeMatch = text.match(/(\d{2}:\d{2}).*=>.*(\d{2}:\d{2})/);
+        if(timeMatch) {
+            document.getElementById('dep').innerText = timeMatch[1];
+            document.getElementById('arr').innerText = timeMatch[2];
+        }
+
+        // Wyciąganie ulgi (szukamy wzorca procentowego)
+        const discMatch = text.match(/(\d+%)|NORMAL/);
+        document.getElementById('discount').innerText = discMatch ? discMatch[0] : "Brak";
+
+        // Wyciąganie miejsca
+        const seatMatch = text.match(/WAGON\s*(\d+).*M\.\s*DO\s*SIEDZENIA\s*(\d+)/i);
+        document.getElementById('seat').innerText = seatMatch ? `Wagon ${seatMatch[1]}, miejsce ${seatMatch[2]}` : "Brak gwarancji miejsca";
+
+        // Generowanie kodu kreskowego 1:1 bez cyfr pod spodem
+        const idMatch = text.match(/ZZ\d+/);
+        if(idMatch) {
+            bwipjs.toCanvas('barcodeCanvas', {
+                bcid: 'code128',
+                text: idMatch[0],
+                scale: 3,
+                height: 12,
+                includetext: false // TO JEST KLUCZ: Brak cyfr pod spodem
+            });
+        }
     }
 </script>
 </body>
