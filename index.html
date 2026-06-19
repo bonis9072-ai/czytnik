@@ -3,58 +3,49 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>BIC - Uniwersalny Czytnik</title>
+  <title>BIC - Skaner & Pamięć</title>
   <script src="https://unpkg.com/html5-qrcode"></script>
   <style>
-    body { font-family: sans-serif; background: #222; padding: 20px; color: white; text-align: center; }
-    .card { background: #333; padding: 20px; border-radius: 20px; max-width: 400px; margin: auto; }
-    button { width: 100%; padding: 20px; border: none; border-radius: 15px; background: #007bff; color: white; font-weight: bold; font-size: 18px; }
-    #result { margin-top: 20px; padding: 15px; border-radius: 10px; font-weight: bold; }
+    body { font-family: sans-serif; background: #e0e0e0; padding: 20px; text-align: center; }
+    .card { background: white; padding: 20px; border-radius: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); max-width: 400px; margin: auto; }
+    button { width: 100%; padding: 15px; border: none; border-radius: 12px; background: #FF6600; color: white; font-weight: 700; font-size: 16px; margin-bottom: 10px; }
+    #resultPanel { margin-top: 20px; padding: 15px; border-radius: 12px; display: none; font-weight: bold; }
   </style>
 </head>
 <body>
+
   <div class="card">
-    <h2>Uniwersalny Skaner</h2>
-    <button onclick="document.getElementById('fileInput').click()">Wybierz dowolne zdjęcie</button>
-    <input type="file" id="fileInput" accept="image/*" style="display:none;" onchange="readAnyImage(this)">
-    <div id="result"></div>
+    <h2>BIC - Skaner & Pamięć</h2>
+    <p>Wybierz zdjęcie biletu. Skaner odczyta kod.</p>
+    
+    <button onclick="document.getElementById('fileInput').click()">📷 Skanuj bilet (Papier / PDF)</button>
+    <input type="file" id="fileInput" accept="image/*" style="display:none;" onchange="handleFile(this)">
+    
+    <div id="resultPanel"></div>
   </div>
 
   <script>
-    async function readAnyImage(input) {
-      const resultDiv = document.getElementById('result');
+    const html5QrCode = new Html5Qrcode("resultPanel");
+
+    function handleFile(input) {
       const file = input.files[0];
+      const res = document.getElementById('resultPanel');
       if (!file) return;
 
-      resultDiv.innerText = "Przetwarzam zdjęcie...";
-      resultDiv.style.background = "#555";
+      res.style.display = "block";
+      res.style.background = "#fff3cd";
+      res.innerText = "Skanowanie w toku...";
 
-      const reader = new FileReader();
-      reader.onload = function(e) {
-        const img = new Image();
-        img.src = e.target.result;
-        img.onload = function() {
-          // Tworzymy canvas, który wyostrza zdjęcie przed skanem
-          const canvas = document.createElement('canvas');
-          canvas.width = img.width;
-          canvas.height = img.height;
-          const ctx = canvas.getContext('2d');
-          ctx.filter = 'contrast(200%) grayscale(100%)'; // Klucz do sukcesu: czarno-biały kontrast
-          ctx.drawImage(img, 0, 0);
-          
-          const html5QrCode = new Html5Qrcode("result");
-          html5QrCode.scanFile(canvas.toDataURL(), true)
-            .then(decodedText => {
-              resultDiv.style.background = "green";
-              resultDiv.innerText = "ODCZYTANO: " + decodedText;
-            })
-            .catch(err => {
-              resultDiv.style.background = "red";
-              resultDiv.innerText = "Nie udało się odczytać. Zdjęcie może być zbyt niewyraźne.";
-            });
-        };
-      };
-      reader.readAsDataURL(file);
+      // Używamy dedykowanego skanera plików
+      html5QrCode.scanFile(file, true)
+        .then(decodedText => {
+          res.style.background = "#d4edda";
+          res.innerText = "ODCZYTANO KOD: " + decodedText;
+        })
+        .catch(err => {
+          res.style.background = "#f8d7da";
+          res.innerText = "Nie udało się odczytać. Upewnij się, że zdjęcie jest ostre.";
+        });
     }
   </script>
 </body>
