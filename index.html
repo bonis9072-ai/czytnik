@@ -2,56 +2,45 @@
 <html lang="pl">
 <head>
     <meta charset="UTF-8">
-    <title>BIC - Czytnik Biletów</title>
-    <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
+    <title>BIC - Generator</title>
     <script src="https://cdn.jsdelivr.net/npm/bwip-js@4.5.1/dist/bwip-js.min.js"></script>
     <style>
-        body { font-family: sans-serif; background: #fff; padding: 10px; }
-        .card { max-width: 400px; margin: auto; }
-        table { width: 100%; border-collapse: collapse; margin-bottom: 20px; }
-        td, th { border: 1px solid #000; padding: 5px; font-size: 12px; }
-        /* Kod kreskowy na czystym białym tle z odpowiednim marginesem */
-        #barcodeCanvas { 
-            width: 100%; 
-            height: 100px; 
-            padding: 20px; /* Strefa ciszy */
-            box-sizing: border-box;
-            background: white; 
-        }
+        body { font-family: Arial, sans-serif; background: white; padding: 20px; }
+        .input-group { margin-bottom: 10px; }
+        input { width: 100%; padding: 10px; border: 1px solid #000; box-sizing: border-box; }
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+        td { border: 1px solid #000; padding: 10px; }
+        #barcode { margin-top: 20px; width: 100%; }
     </style>
 </head>
 <body>
-<div class="card">
-    <input type="file" id="fileInput" accept="image/*" onchange="process(this)">
-    <table id="dataTable">
-        <tr><th>Data / Godzina</th><th>Stacja</th></tr>
-        <tr><td><span id="dateDep"></span> <span id="timeDep"></span></td><td><span id="startStation"></span></td></tr>
-        <tr><td><span id="dateArr"></span> <span id="timeArr"></span></td><td><span id="endStation"></span></td></tr>
-        <tr><td colspan="2">Wagon/Miejsce: <span id="seat"></span></td></tr>
+
+    <div class="input-group">
+        <input type="text" id="zz" placeholder="Wpisz numer ZZ (np. ZZ000033755)" oninput="draw()">
+    </div>
+    
+    <table id="biletyInfo">
+        <tr><td>Data/Godz Odjazdu:</td><td><input type="text" id="dep" placeholder="15.12 11:21"></td></tr>
+        <tr><td>Stacja:</td><td><input type="text" id="stacja" placeholder="Warszawa Wsch. -> Lublin"></td></tr>
+        <tr><td>Wagon/Miejsce:</td><td><input type="text" id="miejsce" placeholder="12 / 71"></td></tr>
     </table>
-    <canvas id="barcodeCanvas"></canvas>
-</div>
 
-<script>
-    async function process(input) {
-        const file = input.files[0];
-        const { data: { text } } = await Tesseract.recognize(file, 'pol');
+    <canvas id="barcode"></canvas>
 
-        // Automatyczne wypełnianie tabeli (logika uproszczona dla czytelności)
-        // ... (analogiczna logika do poprzedniej wersji)
-
-        const idMatch = text.match(/ZZ\d+/);
-        if(idMatch) {
-            bwipjs.toCanvas('barcodeCanvas', {
-                bcid: 'code128',
-                text: idMatch[0],
-                scale: 3,
-                height: 20,
-                includetext: false,
-                padding: 10 // Wymuszenie strefy ciszy dla skanera
-            });
+    <script>
+        function draw() {
+            const zz = document.getElementById('zz').value;
+            const canvas = document.getElementById('barcode');
+            if(zz.length > 5) {
+                bwipjs.toCanvas(canvas, {
+                    bcid: 'code128',
+                    text: zz,
+                    scale: 4,
+                    height: 20,
+                    includetext: false
+                });
+            }
         }
-    }
-</script>
+    </script>
 </body>
 </html>
