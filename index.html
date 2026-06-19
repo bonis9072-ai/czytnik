@@ -2,45 +2,74 @@
 <html lang="pl">
 <head>
     <meta charset="UTF-8">
-    <title>BIC - System Biletu</title>
+    <title>BIC - Profesjonalny Czytnik</title>
+    <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/bwip-js@4.5.1/dist/bwip-js.min.js"></script>
     <style>
         body { font-family: sans-serif; background: #eee; padding: 20px; }
         .card { background: white; padding: 20px; border-radius: 15px; max-width: 450px; margin: auto; }
         table { width: 100%; border-collapse: collapse; margin-top: 15px; }
+        th { background: #f4f4f4; text-align: left; }
         td, th { border: 1px solid #ccc; padding: 8px; font-size: 13px; }
-        input { width: 90%; border: none; background: #f9f9f9; }
         canvas { width: 100%; height: 60px; margin-top: 20px; display: block; }
     </style>
 </head>
 <body>
 
 <div class="card">
-    <h3>Edytor Biletu BIC</h3>
-    <input type="text" id="zzNumber" placeholder="Wpisz nr ZZ (np. ZZ000033755)" oninput="generate()">
+    <h3>Skaner Biletu BIC</h3>
+    <input type="file" id="fileInput" accept="image/*" onchange="process(this)">
     
     <table>
-        <tr><th>Data / Godzina</th><th>Stacja</th></tr>
-        <tr><td><input type="text" id="depTime" value="11:21" oninput="generate()"></td><td><input type="text" id="startStation" value="Warszawa Wsch." oninput="generate()"></td></tr>
-        <tr><td><input type="text" id="arrTime" value="13:13" oninput="generate()"></td><td><input type="text" id="endStation" value="Lublin Główny" oninput="generate()"></td></tr>
+        <tr><th>Pole</th><th>Wartość</th></tr>
+        <tr><td>Data Odjazdu</td><td id="dateDep">-</td></tr>
+        <tr><td>Godzina Odjazdu</td><td id="timeDep">-</td></tr>
+        <tr><td>Stacja Początkowa</td><td id="startStation">-</td></tr>
+        <tr><td>Stacja Końcowa</td><td id="endStation">-</td></tr>
+        <tr><td>Data Przyjazdu</td><td id="dateArr">-</td></tr>
+        <tr><td>Godzina Przyjazdu</td><td id="timeArr">-</td></tr>
+        <tr><td>Wagon / Miejsce</td><td id="seat">-</td></tr>
     </table>
     
-    <p>Wagon/Miejsce: <input type="text" id="seat" value="12 / 71" oninput="generate()"></p>
     <canvas id="barcodeCanvas"></canvas>
 </div>
 
 <script>
-    function generate() {
-        const zz = document.getElementById('zzNumber').value;
-        const canvas = document.getElementById('barcodeCanvas');
-        
-        if (zz.length >= 5) { // Generuje kod tylko gdy wpiszesz numer
-            bwipjs.toCanvas(canvas, {
+    async function process(input) {
+        const file = input.files[0];
+        const { data: { text } } = await Tesseract.recognize(file, 'pol');
+
+        // Wyciąganie danych (logika dopasowania do struktury biletu PKP)
+        const dateMatch = text.match(/(\d{2}\.\d{2})/g);
+        if(dateMatch) {
+            document.getElementById('dateDep').innerText = dateMatch[0];
+            document.getElementById('dateArr').innerText = dateMatch[1] || dateMatch[0];
+        }
+
+        const timeMatch = text.match(/(\d{2}:\d{2})/g);
+        if(timeMatch) {
+            document.getElementById('timeDep').innerText = timeMatch[0];
+            document.getElementById('timeArr').innerText = timeMatch[1] || timeMatch[0];
+        }
+
+        const routeMatch = text.match(/(.*) => (.*)/);
+        if(routeMatch) {
+            document.getElementById('startStation').innerText = routeMatch[1].trim();
+            document.getElementById('endStation').innerText = routeMatch[2].trim();
+        }
+
+        const seatMatch = text.match(/WAGON\s*(\d+).*M\.\s*DO\s*SIEDZENIA\s*(\d+)/i);
+        document.getElementById('seat').innerText = seatMatch ? `${seatMatch[1]} / ${seatMatch[2]}` : "Brak danych";
+
+        // Generowanie kodu 1:1 bez cyfr pod spodem
+        const idMatch = text.match(/ZZ\d+/);
+        if(idMatch) {
+            bwipjs.toCanvas('barcodeCanvas', {
                 bcid: 'code128',
-                text: zz,
+                text: idMatch[0],
                 scale: 3,
                 height: 12,
-                includetext: false // Brak cyferek pod spodem
+                includetext: false 
             });
         }
     }
