@@ -4,23 +4,25 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>BIC - Czytnik Biletów</title>
-  
   <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
   
   <style>
     body { font-family: sans-serif; background: #f4f7f6; padding: 20px; text-align: center; }
     .card { background: white; padding: 20px; border-radius: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); max-width: 400px; margin: auto; }
     button { width: 100%; padding: 15px; border: none; border-radius: 12px; background: #FF6600; color: white; font-weight: 700; cursor: pointer; }
     
-    /* Styl kropek */
-    .spinner { display: none; margin: 20px auto; width: 60px; text-align: center; }
-    .spinner > div { width: 12px; height: 12px; background-color: #FF6600; border-radius: 100%; display: inline-block; animation: sk-bouncedelay 1.4s infinite ease-in-out both; margin: 0 2px; }
-    .spinner .bounce1 { animation-delay: -0.32s; }
-    .spinner .bounce2 { animation-delay: -0.16s; }
-    @keyframes sk-bouncedelay { 0%, 80%, 100% { transform: scale(0); } 40% { transform: scale(1.0); } }
+    /* Animacja kręcących się kropek */
+    .spinner { display: none; margin: 20px auto; width: 40px; height: 40px; position: relative; animation: rotate-spinner 1.5s linear infinite; }
+    .spinner div { width: 12px; height: 12px; background-color: #FF6600; border-radius: 50%; position: absolute; }
+    .bounce1 { top: 0; left: 14px; }
+    .bounce2 { top: 14px; right: 0; }
+    .bounce3 { bottom: 0; left: 14px; }
+    .bounce4 { top: 14px; left: 0; }
+    @keyframes rotate-spinner { 100% { transform: rotate(360deg); } }
     
     #result { margin-top: 20px; font-size: 14px; text-align: left; }
+    #qrCanvas { margin-top: 20px; display: inline-block; }
   </style>
 </head>
 <body>
@@ -30,10 +32,10 @@
     <input type="file" id="fileInput" accept="image/*" capture="environment" style="display:none;" onchange="processTicket(this)">
     
     <div id="spinner" class="spinner">
-      <div class="bounce1"></div><div class="bounce2"></div><div class="bounce3"></div>
+      <div class="bounce1"></div><div class="bounce2"></div><div class="bounce3"></div><div class="bounce4"></div>
     </div>
     <div id="result"></div>
-    <canvas id="qrCanvas"></canvas>
+    <div id="qrCanvas"></div>
   </div>
 
   <script>
@@ -45,19 +47,25 @@
       
       if (!file) return;
 
+      // Reset stanu
       spinner.style.display = "block";
       resDiv.innerText = "Analizuję bilet...";
-      canvas.style.display = "none";
+      canvas.innerHTML = ""; 
 
       try {
         const { data: { text } } = await Tesseract.recognize(file, 'pol');
+        
         const ticketId = text.match(/ID:\s*(\d+)/i)?.[1] || "Nie znaleziono ID";
         const train = text.match(/POC\.\s*(\d+)/i)?.[1] || "Nieznany";
         
         resDiv.innerHTML = `<strong>Znaleziono:</strong><br>ID: ${ticketId}<br>Pociąg: ${train}`;
         
-        canvas.style.display = "block";
-        await QRCode.toCanvas(canvas, `Bilet IC ID:${ticketId} Pociag:${train}`, { width: 200 });
+        // Generowanie QR
+        new QRCode(canvas, {
+          text: `Bilet IC ID:${ticketId} Pociag:${train}`,
+          width: 200,
+          height: 200
+        });
       } catch (err) {
         resDiv.innerText = "Błąd: " + err.message;
       } finally {
