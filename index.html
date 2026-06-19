@@ -10,7 +10,7 @@
   
   <style>
     body { font-family: sans-serif; background: #f4f7f6; padding: 20px; text-align: center; color: #333; margin: 0; min-height: 100vh; position: relative; overflow-x: hidden; }
-    .card { background: white; padding: 20px; border-radius: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); max-width: 400px; margin: auto; position: relative; z-index: 10; }
+    .card { background: white; padding: 20px; border-radius: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); max-width: 400px; margin: 20px auto; position: relative; z-index: 10; }
     button { width: 100%; padding: 15px; border: none; border-radius: 12px; background: #FF6600; color: white; font-weight: 700; cursor: pointer; font-size: 16px; margin-bottom: 10px; }
     
     .spinner { display: none; margin: 20px auto; width: 40px; height: 40px; position: relative; animation: rotate-spinner 1.5s linear infinite; }
@@ -40,39 +40,43 @@
     .badge.discount { background: #fff3cd; color: #856404; }
 
     /* ==========================================================================
-       SYSTEM ANIMACJI POCIĄGÓW W TLE (Mijanka 10s)
+       ZRELAKSOWANY SYSTEM DIORAMY KOLEJOWEJ (Pociągi jeden pod drugim)
        ========================================================================== */
-    .train-container { position: fixed; left: 0; width: 100%; pointer-events: none; z-index: 1; opacity: 0.12; color: #555; }
-    .track-top { top: 12%; }
-    .track-bottom { bottom: 12%; }
+    .train-container { position: fixed; left: 0; width: 100%; pointer-events: none; z-index: 1; opacity: 0.10; color: #555; }
+    
+    /* Ustawienie torów równolegle na dole ekranu */
+    .track-upper { bottom: 16%; }
+    .track-lower { bottom: 6%; }
 
-    .train-mover-left { width: 160px; position: absolute; animation: move-left 10s linear infinite; }
-    .train-mover-right { width: 160px; position: absolute; animation: move-right 10s linear infinite 5s; }
+    /* Wolna, dostojna animacja (30 sekund na pełną pętlę) */
+    .train-mover-left { width: 160px; position: absolute; animation: move-left 30s linear infinite; }
+    .train-mover-right { width: 160px; position: absolute; animation: move-right 30s linear infinite 15s; }
 
     @keyframes move-left {
       0% { transform: translateX(100vw) scaleX(-1); }
-      70% { transform: translateX(-180px) scaleX(-1); }
+      75% { transform: translateX(-180px) scaleX(-1); }
       100% { transform: translateX(-180px) scaleX(-1); }
     }
     @keyframes move-right {
       0% { transform: translateX(-180px); }
-      70% { transform: translateX(100vw); }
+      75% { transform: translateX(100vw); }
       100% { transform: translateX(100vw); }
     }
 
+    /* Delikatne, powolne kołysanie wagonów */
     @keyframes train-jolt {
       0%, 88%, 93%, 100% { transform: translateY(0); }
-      90% { transform: translateY(-2.5px); } 
-      91.5% { transform: translateY(0.5px); }  
+      90% { transform: translateY(-1.5px); } 
+      91.5% { transform: translateY(0.3px); }  
     }
-    .body-loco { animation: train-jolt 2.3s infinite ease-in-out 0.1s; transform-origin: center; }
-    .body-car1 { animation: train-jolt 1.9s infinite ease-in-out 0.4s; transform-origin: center; }
-    .body-car2 { animation: train-jolt 2.1s infinite ease-in-out 0.8s; transform-origin: center; }
+    .body-loco { animation: train-jolt 2.8s infinite ease-in-out 0.1s; transform-origin: center; }
+    .body-car1 { animation: train-jolt 2.4s infinite ease-in-out 0.4s; transform-origin: center; }
+    .body-car2 { animation: train-jolt 2.6s infinite ease-in-out 0.8s; transform-origin: center; }
   </style>
 </head>
 <body>
 
-  <div class="train-container track-top">
+  <div class="train-container track-upper">
     <div class="train-mover-left">
       <svg viewBox="0 0 230 60" xmlns="http://www.w3.org/2000/svg">
         <g class="body-car2"><rect x="5" y="15" width="60" height="28" rx="2" fill="currentColor"/><rect x="5" y="12" width="60" height="3" fill="currentColor"/><rect x="12" y="12" width="10" height="3" fill="currentColor"/><rect x="48" y="12" width="10" height="3" fill="currentColor"/><rect x="10" y="20" width="11" height="9" fill="#f4f7f6"/><rect x="25" y="20" width="11" height="9" fill="#f4f7f6"/><rect x="40" y="20" width="11" height="9" fill="#f4f7f6"/></g>
@@ -83,7 +87,7 @@
     </div>
   </div>
 
-  <div class="train-container track-bottom">
+  <div class="train-container track-lower">
     <div class="train-mover-right">
       <svg viewBox="0 0 230 60" xmlns="http://www.w3.org/2000/svg">
         <g class="body-car2"><rect x="5" y="15" width="60" height="28" rx="2" fill="currentColor"/><rect x="5" y="12" width="60" height="3" fill="currentColor"/><rect x="12" y="12" width="10" height="3" fill="currentColor"/><rect x="48" y="12" width="10" height="3" fill="currentColor"/><rect x="10" y="20" width="11" height="9" fill="#f4f7f6"/><rect x="25" y="20" width="11" height="9" fill="#f4f7f6"/><rect x="40" y="20" width="11" height="9" fill="#f4f7f6"/></g>
@@ -134,7 +138,7 @@
     let currentTicketId = "";
     let currentRawData = "";
 
-    // KRYTYCZNY BEZPIECZNIK: Wyświetli na ekranie każdy niespodziewany błąd skryptu
+    // Globalny łapacz błędów dla bezpieczeństwa
     window.onerror = function(msg, url, line) {
       const resDiv = document.getElementById('result');
       if(resDiv) {
@@ -155,16 +159,15 @@
       const file = input.files[0];
       if (!file) return;
 
-      // Wizualny reset interfejsu
+      // Reset UI
       spinner.style.display = "block";
       infoBox.style.display = "none";
       editBox.style.display = "none";
       canvas.style.display = "none";
       resDiv.style.background = "#eef";
       resDiv.style.color = "#000";
-      resDiv.innerText = "Inicjalizacja pliku graficznego...";
+      resDiv.innerText = "Inicjalizacja pliku...";
 
-      // Weryfikacja obecności biblioteki ZXing
       if (typeof ZXing === 'undefined') {
         resDiv.style.background = "#f8d7da";
         resDiv.style.color = "#721c24";
@@ -175,11 +178,11 @@
 
       const img = new Image();
       
-      img.onload = async function() {
+      img.onload = function() {
         try {
           resDiv.innerText = "Kompresowanie i optymalizacja RAM-u...";
           
-          // Bezpieczne skalowanie obrazu do max 900px
+          // Bezpieczne skalowanie obrazu w dół do max 900px
           const maxDim = 900;
           let w = img.width;
           let h = img.height;
@@ -196,71 +199,85 @@
           
           resDiv.innerText = "Skanowanie kodu Aztec (Analiza obrazu)...";
 
-          // Wymuszenie dedykowanego czytnika kodów Aztec dla wydajności mobilnej
-          const codeReader = typeof ZXing.BrowserAztecCodeReader !== 'undefined' 
-            ? new ZXing.BrowserAztecCodeReader() 
-            : new ZXing.BrowserMultiFormatReader();
-            
-          const result = await codeReader.decodeFromCanvas(compressCanvas);
-          currentRawData = result.getText();
+          // Tworzenie tymczasowego, zoptymalizowanego elementu Image
+          const smallImg = new Image();
           
-          if (!currentRawData) {
-            throw new Error("Odczytany kod jest pusty.");
-          }
+          smallImg.onload = async function() {
+            try {
+              const codeReader = typeof ZXing.BrowserAztecCodeReader !== 'undefined' 
+                ? new ZXing.BrowserAztecCodeReader() 
+                : new ZXing.BrowserMultiFormatReader();
+                
+              const result = await codeReader.decodeFromImageElement(smallImg);
+              currentRawData = result.getText();
+              
+              if (!currentRawData) {
+                throw new Error("Odczytany kod jest pusty.");
+              }
 
-          // Generowanie nowego cyfrowego kodu Aztec
-          bwipjs.toCanvas(canvas, {
-            bcid: 'aztec',       
-            text: currentRawData,       
-            scale: 3,            
-            purebarcode: true    
-          });
-          
-          currentTicketId = currentRawData.split('|')[0] || "NieznanyID";
-          document.getElementById('infoId').innerText = currentTicketId;
-          
-          const savedData = localStorage.getItem(currentTicketId);
-          if (savedData) {
-            const parsed = JSON.parse(savedData);
-            document.getElementById('infoTariff').innerHTML = `<span class="badge ${parsed.tariff.includes('U:') ? 'discount' : 'normal'}">${parsed.tariff}</span>`;
-            document.getElementById('infoRoute').innerText = parsed.route;
-            document.getElementById('infoTime').innerText = parsed.time;
-          } else {
-            document.getElementById('infoTariff').innerHTML = `<span class="badge normal">Nowy bilet</span>`;
-            document.getElementById('infoRoute').innerText = "Wprowadź trasę poniżej";
-            document.getElementById('infoTime').innerText = "Wprowadź godziny połączenia";
-            showEditForm();
-          }
+              // Generowanie nowego cyfrowego kodu Aztec na ekranie
+              bwipjs.toCanvas(canvas, {
+                bcid: 'aztec',       
+                text: currentRawData,       
+                scale: 3,            
+                purebarcode: true    
+              });
+              
+              currentTicketId = currentRawData.split('|')[0] || "NieznanyID";
+              document.getElementById('infoId').innerText = currentTicketId;
+              
+              const savedData = localStorage.getItem(currentTicketId);
+              if (savedData) {
+                const parsed = JSON.parse(savedData);
+                document.getElementById('infoTariff').innerHTML = `<span class="badge ${parsed.tariff.includes('U:') ? 'discount' : 'normal'}">${parsed.tariff}</span>`;
+                document.getElementById('infoRoute').innerText = parsed.route;
+                document.getElementById('infoTime').innerText = parsed.time;
+              } else {
+                document.getElementById('infoTariff').innerHTML = `<span class="badge normal">Nowy bilet</span>`;
+                document.getElementById('infoRoute').innerText = "Wprowadź trasę poniżej";
+                document.getElementById('infoTime').innerText = "Wprowadź godziny połączenia";
+                showEditForm();
+              }
 
-          resDiv.style.background = "#d4edda";
-          resDiv.style.color = "#155724";
-          resDiv.innerHTML = "<strong>Sukces!</strong> Kod odczytany pomyślnie.";
-          infoBox.style.display = "block"; 
-          canvas.style.display = "inline-block"; 
+              resDiv.style.background = "#d4edda";
+              resDiv.style.color = "#155724";
+              resDiv.innerHTML = "<strong>Sukces!</strong> Kod odczytany pomyślnie.";
+              infoBox.style.display = "block"; 
+              canvas.style.display = "inline-block";
 
-        } catch (err) {
+            } catch (err) {
+              resDiv.style.background = "#f8d7da";
+              resDiv.style.color = "#721c24";
+              if (err.name === 'NotFoundException' || err.message.includes('No MultiFormat Readers') || err.message.includes('No code')) {
+                resDiv.innerHTML = "<strong>Nie wykryto kodu Aztec.</strong> Zbliż aparat, wyprostuj bilet i unikaj odbić światła.";
+              } else {
+                resDiv.innerHTML = "<strong>Błąd dekodera:</strong> " + err.message;
+              }
+            } finally {
+              spinner.style.display = "none";
+            }
+          };
+
+          smallImg.src = compressCanvas.toDataURL('image/jpeg', 0.85);
+
+        } catch (globalErr) {
           resDiv.style.background = "#f8d7da";
           resDiv.style.color = "#721c24";
-          if (err.name === 'NotFoundException' || err.message.includes('No MultiFormat Readers') || err.message.includes('No code')) {
-            resDiv.innerHTML = "<strong>Nie wykryto kodu Aztec.</strong> Zbliż aparat, wyprostuj bilet i unikaj odbić światła.";
-          } else {
-            resDiv.innerHTML = "<strong>Błąd dekodera:</strong> " + err.message;
-          }
-        } finally {
+          resDiv.innerHTML = "<strong>Błąd przetwarzania:</strong> " + globalErr.message;
           spinner.style.display = "none";
-          URL.revokeObjectURL(img.src); // Bezpieczne zwolnienie wirtualnej pamięci
+        } finally {
+          URL.revokeObjectURL(img.src);
         }
       };
 
       img.onerror = function() {
         resDiv.style.background = "#f8d7da";
         resDiv.style.color = "#721c24";
-        resDiv.innerHTML = "<strong>Błąd sprzętowy:</strong> Telefon odmówił załadowania tego pliku graficznego do pamięci.";
+        resDiv.innerHTML = "<strong>Błąd sprzętowy:</strong> Nie można załadować pliku graficznego.";
         spinner.style.display = "none";
         URL.revokeObjectURL(img.src);
       };
 
-      // Zastąpienie FileReader przez ObjectURL (0% narzutu RAM-u)
       img.src = URL.createObjectURL(file);
     }
 
